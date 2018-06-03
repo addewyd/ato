@@ -1,0 +1,528 @@
+/*  */
+
+body {
+    margin-top: 0px;
+    border: 0px solid red;
+}
+[v-cloak] {
+    display: none;
+}
+table.grid {
+display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+    border-color: grey;
+
+}
+
+table.grid tbody {
+ /*   min-height:240px; */
+    max-height: 600px;
+    overflow:auto;
+}
+
+.grid-act-but {
+    background-image: url(../images/action.gif);
+    background-position: center center!important;
+    cursor: pointer;
+    width: 26px;
+    height: 18px;
+    background-repeat: no-repeat;
+    border: 1px solid #eeeeee;
+}
+.grid-head {
+background-color: #eef2f4;    
+}
+thead > tr, tbody{
+ /*   display:block; */
+}
+/*
+th {
+  background-color: #424242;
+  color: rgba(255,255,255,0.66);
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+*/
+/*
+td {
+  background-color: #f9f9f9;
+}
+*/
+table.grid tr td {
+    border-bottom: 1px solid #eeeeee;
+    padding: 10px!important;
+    font: 13px/20px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    color: #555;
+}
+
+table.grid tr.grid-head th {
+    padding: 0 10px!important;
+    font: 12px/40px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    vertical-align: middle;
+    white-space: nowrap;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+    
+}
+
+th.action {
+    background-image: url(../images/actiont.gif);
+    background-position: center center!important;
+    cursor: pointer;
+    width: 26px;
+    height: 18px;
+    background-repeat: no-repeat;
+}
+/*
+th, td {
+  min-width: 120px;
+  padding: 2px 2px;
+}
+*/
+.point {
+    cursor: pointer;
+}
+
+th.active {
+  color: #0000c0;
+}
+
+th.active .arrow {
+  opacity: 1;
+}
+
+.arrow {
+  display: inline-block;
+  vertical-align: middle;
+  width: 0;
+  height: 0;
+  margin-left: 5px;
+  opacity: 0.66;
+}
+
+.arrow.asc {
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid;
+}
+
+.arrow.dsc {
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid;
+}
+div.main-grid {
+    
+    border: 0px solid tomato;
+}
+
+#topbuttons {
+    padding: 0px 0px 5px 0px; 
+}
+
+button.topb {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 20px;
+    display: inline-block;
+    height: 36px;
+    margin-right: 1px;
+    padding: 6px 20px;
+
+    vertical-align: middle;
+    white-space: nowrap;
+    text-decoration: none;
+    color: #535c69;
+    
+    border: 0px solid;
+}
+
+div.top0 {
+    border: 0px solid blue;
+}
+
+.top1 {
+    font-size: 150%;
+}
+
+.top0.top2 {
+    
+}
+
+.top0.top3 {
+    
+}
+
+.top4 {
+    padding: 10px 20px 5px 10px; 
+    border: 0px solid green;
+}
+
+p.control {
+    
+}
+
+.input {
+    
+}
+
+.help {
+   color: red; 
+}
+
+.is-danger {
+    
+}
+
+.debug-out {
+    color: red;
+    font-size: 120%;
+}
+
+.debug {
+    border: 1px solid red;
+}
+
+.debug::before {
+    content: "debug output";
+    display: block;
+}
+
+.modal-mask {
+  position: fixed;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, .5);
+  display: table;
+  transition: opacity .3s ease;
+}
+
+.modal-wrapper {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.modal-container {
+  width: 100%;
+  height: 100%;
+  margin: 0px auto;
+  padding: 10px 20px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .33);
+  transition: all .3s ease;
+  overflow: auto;
+}
+
+.modal-header h3 {
+  margin-top: 0;
+  color: #42b983;
+}
+
+.modal-body {
+  margin: 20px 0;
+}
+
+.modal-default-button {
+  /*float: right;*/
+}
+
+/*
+ * The following styles are auto-applied to elements with
+ * transition="modal" when their visibility is toggled
+ * by Vue.js.
+ *
+ * You can easily play with the modal transition by editing
+ * these styles.
+ */
+
+.modal-enter {
+  opacity: 0;
+}
+
+.modal-leave-active {
+  opacity: 0;
+}
+
+.modal-enter .modal-container,
+.modal-leave-active .modal-container {
+  -webkit-transform: scale(1.1);
+  transform: scale(1.1);
+}
+
+.role-select {
+    padding: 0px 0px 10px 10px;
+    border: 0px solid green;
+    width: 100%;
+}
+
+#user-roles {
+    
+    
+}
+
+#user-grid {
+    border: 0px solid green;
+    width: 45%;
+    
+}
+
+#select-role-div {
+    border: 0px solid green;
+    width: 54%;
+    
+}
+
+.clear {
+    clear: both;
+}
+
+.main-center {
+    border: 0px solid green;
+}
+.main-left {
+    float: left;
+    width: 55%;
+    border: 0px solid yellow;
+}
+
+/* comments */
+
+.main-right {
+    float: left;
+    width: 45%;
+    margin-left: 0px;
+    border-left: 1px solid #000000;
+    height: 400px;
+    overflow: auto;
+}
+
+.main-right-inner {
+    margin-left: 6px;
+}
+
+.single-msg {
+    background-color: #eeeeee;
+    margin: 3px 3px 3px 3px;
+}
+.whole-msg {
+    background-color: #dddddd;
+}
+
+
+.comments-list {
+}
+
+.comments-enter {
+    
+}
+
+
+/* card */
+
+.card-name {
+    font-size: 120%;
+    color: darkcyan;
+}
+
+label {
+    position: relative;
+    margin-bottom: 5px;
+    color: #a3a9b1;
+    font: 12px/14px "Helvetica Neue",Helvetica,Arial,sans-serif;    
+}
+
+input.content-input {
+    display: block;
+    box-sizing: border-box;
+    padding: 10px 9px;
+    min-height: 39px;
+    max-width: 100%;
+    width: 100%;
+    outline: 0;
+    border: 1px solid #c4c7cc;
+    border-radius: 1px;
+    background-color: #fff;
+    color: #424956;
+    font: 15px/17px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    transition: 220ms all ease;
+}
+
+textarea.content-input {
+    display: block;
+    box-sizing: border-box;
+    padding: 10px 9px;
+    min-height: 39px;
+    max-width: 100%;
+    width: 100%;
+    outline: 0;
+    border: 1px solid #c4c7cc;
+    border-radius: 1px;
+    background-color: #fff;
+    color: #424956;
+    font: 15px/17px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    transition: 220ms all ease;
+}
+
+.bpedit {
+    height: 440px;
+}
+
+input.file-input {
+    
+opacity: 0;
+    font-size: 150px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+}
+    
+span.file-input {
+    height: 39px;
+    line-height: 39px;
+    margin: 0 12px 0 0;
+    box-sizing: border-box;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    text-align: center;    
+    
+    background: #ecedef;
+    box-shadow: 0 0 0 1px #c6cdd3 inset;
+    border-radius: 2px;
+    cursor: pointer;
+    color: #7a818a;
+    font-family: "OpenSans-Bold",Helvetica,Arial,sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    outline: 0;
+    vertical-align: middle;
+    text-decoration: none;
+    text-transform: uppercase;
+    text-shadow: none;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color .2s linear,color .2s linear;
+    border: 0;    
+    
+}
+
+p.field {
+    position: relative;
+    display: block;
+    margin-bottom: 10px;
+    color: #424956;
+    word-break: break-word;
+    font: 15px/17px "Helvetica Neue",Helvetica,Arial,sans-serif;    
+}
+
+.file {
+    height: 40px;
+}
+
+select {
+    position: relative;
+    padding: 10px 26px 10px 9px;
+    background-image: none!important;
+    cursor: pointer;
+    display: block;
+    box-sizing: border-box;
+    min-height: 39px;
+    max-width: 100%;
+    width: 100%;
+    outline: 0;
+    border: 1px solid #c4c7cc;
+    border-radius: 1px;
+    background-color: #fff;
+    color: #424956;
+    font: 15px/17px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    transition: 220ms all ease;
+}
+
+button.all-but {
+    position: relative;
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 0 19px;
+    margin: 0px 0px 5px 0px;
+    height: 39px;
+    outline: 0;
+    border: 0;
+    border-radius: 2px;
+    vertical-align: middle;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    font: 600 12px/39px "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+    cursor: pointer;
+    transition: 160ms color linear,160ms background-color linear,160ms opacity linear,160ms padding linear;
+}
+
+
+button.ok-but {
+    background-color: green;
+        
+}
+
+button.cancel-but {
+    background-color: gray;
+    
+}
+
+.app-frame-layout {
+    height: 1200px;
+    border:2px solid goldenrod;
+}
+
+.del-but {
+    margin: 2px 0px 0 10px;
+}
+
+.obj-act {
+    margin: 6px 0 6px 10px;
+}
+
+.arch-all {
+    height: 100%;
+}
+
+button.prevnext {
+    position: relative;
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 0 6px;
+    margin: 0px 0px 5px 0px;
+    height: 39px;
+    outline: 0;
+    border: 0;
+    border-radius: 2px;
+    vertical-align: middle;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    font: 600 12px/39px "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+    cursor: pointer;
+    transition: 160ms color linear,160ms background-color linear,160ms opacity linear,160ms padding linear;
+    
+}

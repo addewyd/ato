@@ -1,0 +1,59 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : 27.05.2018, 14:04:14
+    Author     : user
+*/
+
+    .dg-container {
+    z-index: 5000;
+}
+
+.dg-main-content {
+  width: 98%;
+  /*width: calc(98% - 30px);*/
+  max-width: 400px;
+  padding: 15px;
+  border-radius: 2px;
+  margin: 25px auto;
+  background-color: #ffffff;
+}
+
+.dg-btn {
+  display: inline-block;
+  position: relative;
+  min-width: 80px;
+  padding: 6px 20px;
+  border-radius: 2px;
+  outline: 0;
+  border: 1px solid transparent;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.dg-btn--cancel {
+  color: #000;
+  background-color: #dddddd;
+}
+
+.dg-btn--ok {
+  color: #fff;
+  background-color: #3fb618;
+  border-color: #0096D9;
+}
+
+
+.app-frame-layout {
+    height: 1200px;
+    border:2px solid goldenrod;
+}
