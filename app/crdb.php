@@ -76,8 +76,9 @@ $sql4 = "
 )";
 
 $sql5 ="
-    insert into vid_zak (vid_zak) values ('vid1');
-    insert into vid_zak (vid_zak) values ('vid2');
+    insert into vid_zak (vid_zak) values ('Вид закупки 1');
+    insert into vid_zak (vid_zak) values ('Вид закупки 2');
+    insert into vid_zak (vid_zak) values ('Вид закупки 3');
 "; 
 
 

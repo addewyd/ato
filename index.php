@@ -108,7 +108,7 @@
                             :id="itemId"
                             :state="itemState"
                             :record="gridLine">  
-                            Main
+                            
                         </main-form>
                     </div>
                 </div>
@@ -231,6 +231,7 @@
             ui {{userinfo}} <br />
             roles {{roles}} <br />
             userroles {{userroles}}
+                
             <div style="font-size:50%;font-face:courier"> 
                 {{userlist}}                    
             </div>
@@ -249,10 +250,9 @@
         </p>
         
         <p class="field">        
-
         <input v-on:change="changesr()" type="checkbox" id="checkbox-sr" v-model="d_strictroles">
         <label for="checkbox-sr">strict roles {{ d_strictroles }}</label>
-            </p>
+        </p>
             <div id="user-roles">
             <div id="user-grid" style="float: left">
                 <opt-user-grid :columns="columns">
@@ -260,7 +260,7 @@
                 
             </div>
             <div id="select-role-div"  style="float: left">
-                <div class="role-select"> role for {{selectedUser}}: </div>
+                <div class="role-select"> Роль для {{selectedUser?selectedUser.NAME:' (Выберите слева)'}}: </div>
                 <div class="role-select">
                 <select id="select-role" v-model="role_sel_id">
                     <option v-for="option in role_options" v-bind:value="option.id">
@@ -273,7 +273,6 @@
                 </div>
             </div>
             <div class="clear"></div>
-            selected user: {{selectedUser}}
             </div> <!--    user-roles -->
         </div>
         <div>
@@ -401,7 +400,32 @@
             <span v-show="errors.has('linkzak')" 
                 class="help is-danger">{{ errors.first('linkzak') }}</span>
         </p>
-        <label for="dateend">End date</label>
+
+        <label for="linkzak">Наименование</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <input id="namezak"  class="content-input" name="namezak" 
+                v-model="namezak" placeholder="" 
+                v-validate="'required'"
+                :class="{'input': true, 'is-danger': errors.has('namezak') }"
+            />
+            <span v-show="errors.has('namezak')" 
+                class="help is-danger">{{ errors.first('namezak') }}</span>
+        </p>
+
+        <label for="linkzak">Заказчик</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <input id="zakazchik"  class="content-input" name="zakazchik" 
+                v-model="zakazchik" placeholder="" 
+                v-validate="'required'"
+                :class="{'input': true, 'is-danger': errors.has('zakazchik') }"
+            />
+            <span v-show="errors.has('zakazchik')" 
+                class="help is-danger">{{ errors.first('zakazchik') }}</span>
+        </p>
+
+        <label for="dateend">Дата окончания</label>
         <p :class="{ 'control': true }">
              
             <date-picker  id="dateend" name="dateend" v-model="dateend" 
@@ -410,7 +434,8 @@
             <span v-show="errors.has('dateend')" 
                 class="help is-danger">{{ errors.first('dateend') }}</span>
         </p>
-        <label for="somefile1">Some file 1</label>
+        <!-- TZ -->
+        <label for="somefile1">Техническое задание</label>
             <div v-if="somefile1_obj.name" class="file-name">{{somefile1_obj.name}}, {{somefile1_obj.size}}</div>    
         <p :class="{ 'control': true }" class="field file" >
             <span class="file-input">Добавить файл</span>    
@@ -454,7 +479,7 @@ Progress {{upprc}}%
         Main work panel [ admin: {{admin}} ] {{userinfo.LAST_NAME}} 
                 user role: {{currentRole.role}} <br />
         Responsibility: {{inRole()}} <br />
-            {{sObject}}
+        <!-- {{sObject}} -->
     </div>
     <div v-if="d_inRole">
        You are reponsible: {{currentRole.role}} 
@@ -464,15 +489,12 @@ Progress {{upprc}}%
     </div>
     
     <div class="top2">
-        main, item id = {{id}} <br />
-        <div class="card-name">
-            name = {{sObject.name}}
-        </div>
-        state(db rec) = {{state}} <br />
-        responsible = {{sObject.resp}} <br/>
+        Исполнитель {{sObject.resp}} <br/>
+            <!--
         role = {{currentRole}} <br />
         resp role id = {{rec.resp_role_id}} <br />
-        resp role= {{resp_role}}
+        resp role= {{resp_role}} 
+            -->
     </div>
     <div class="top3">
       <div v-if="debug" class="debug">
@@ -518,9 +540,11 @@ Progress {{upprc}}%
             <span v-show="errors.has('linkzak')" 
                 class="help is-danger">{{ errors.first('linkzak') }}</span>
         </p>
+        <div>Нименование закупки {{rec.name_zak}}</div>
+        <div>Заказчик {{rec.zakazchik}}</div>
         
         <div v-if="rec.f1_url">
-        somefile1 <a v-bind:href="rec.f1_url">{{rec.f1_name}}</a>
+        Техническое задание <a v-bind:href="rec.f1_url">{{rec.f1_name}}</a>
         </div>
         <div v-if="rec.f2_url">
         somefile2 <a v-bind:href="rec.f2_url">{{rec.f2_name}}</a>
@@ -563,7 +587,7 @@ No next, it is the END
     <button class="all-but btn-secondary" v-on:click="cancel">Отмена</button>        
 </div>
 <hr />
-<div class="del-but">
+<div class="del-but" v-if="admin">
     <button class="all-but btn-danger" 
     v-confirm="{ok: deleteCard2, 
         cancel: doNothing, 

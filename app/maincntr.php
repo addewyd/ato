@@ -49,16 +49,12 @@ class Maincntr extends AuxBase {
                 $npage = $params['npage'];
                 $rcount = $params['rcount'];
                 $role_id = $params['role_id'];
+                $strictroles = $params['strictroles'];
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 
                 try {
-                    if ($role_id) {
-//                        $sql = 'select c.*, v.vid_zak from cards c 
-//                        join vid_zak v on c.vid_zak_id=v.id
-//                         where c.state != 80 
-//                        and responsible in (select user_id from userroles where role_id=?)
-//                       limit ?,?';  // 80 - archived
+                    if ($role_id && $strictroles) {
                         $sql = 'select c.*, v.vid_zak from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
                          where c.state != 80 
@@ -66,13 +62,21 @@ class Maincntr extends AuxBase {
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
                         $q->execute([$role_id, $npage * $rcount, $rcount]);
-                    } else {
+                    } elseif($role_id) {
                         $sql = 'select c.*, v.vid_zak from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
                          where c.state != 80 
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
                         $q->execute([$npage * $rcount, $rcount]);
+                    } else { // No access!
+                        $sql = 'select c.*, v.vid_zak from cards c 
+                        join vid_zak v on c.vid_zak_id=v.id
+                        where c.state != 80 and 0=1
+                        limit ?,?';  // 80 - archived
+                        $q = $pdo->prepare($sql);
+                        $q->execute([$npage * $rcount, $rcount]);
+                        
                     }
                     $res = $q->fetchAll(PDO::FETCH_ASSOC);
                     $status = 'success';
@@ -353,6 +357,7 @@ $this -> log -> debug('set role', $params);
                     $obB24Disk = new \Bitrix24\Disk\Disk($this->obB24App);
                     //$this->log->debug('DISK', [$obB24Disk]);
                     if(isset($_FILES['somefile1'])) {
+                        // somefile1 - Техзадание
                         $res = $obB24Disk -> upload(
                                 $this, $params['folder_id'],$_FILES['somefile1']);
                         if(!$res) {
@@ -388,6 +393,9 @@ $this -> log -> debug('set role', $params);
                 $dbname = $params['dbname'];
                 //$values = $params['values'];
                 $values = $params;
+                
+                $namezak = $values['namezak'];
+                $zakazchik = $values['zakazchik'];
 
                 $res = 'n/a';
                 $status = 'success';
@@ -395,10 +403,11 @@ $this -> log -> debug('set role', $params);
 
                 $sql = 'insert into cards '
                         . '(cdate,state,vid_zak_id, nom_zak,'
-                        . 'link_zak,deal_cat,author,responsible, resp_role_id, '
+                        . 'link_zak,name_zak,zakazchik,'
+                        . 'deal_cat,author,responsible, resp_role_id, '
                         . 'cur_resp,date_end,somefile1, f1_url,f1_name,'
                         . 'somefile2, f2_url,f2_name) '
-                        . 'values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                        . 'values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $today = date("Y-m-d H:i:s"); 
@@ -415,6 +424,8 @@ $this -> log -> debug('set role', $params);
                         $values['vidzak'],
                         $values['nomzak'],
                         $values['linkzak'],
+                        $namezak,
+                        $zakazchik,
                         $values['dealcat'],
                         $values['author'],
                         $values['resp'],

@@ -128,6 +128,7 @@ application.prototype.getGridDataSync = async function (npage, rcount, role_id) 
                 'dbname': dbname, 
                 npage: npage, 
                 rcount: rcount,
+                strictroles: app.strictRole,
                 role_id: role_id
             }, BX24.getAuth());
     return new Promise((resolve, reject) => {
@@ -483,6 +484,7 @@ async function initapp() {
     app.userInfo = await app.getUserInfo();
 
     app.options = await app.loadOptions();
+    console.log('OPTS', app.options);
     app.strictRole = app.options[0].strictroles;
     app.folder_id = app.options[0].folder_id;
     await app.loadUserList();
@@ -550,7 +552,7 @@ Vue.component('main-grid', {
     },
     filters: {
         capitalize: function (str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
+            return str; // str.charAt(0).toUpperCase() + str.slice(1);
         }
     },
     methods: {
@@ -1087,13 +1089,15 @@ Vue.component('newcard-form', {
             vidzak: '',
             nomzak: 'N',
             linkzak: 'https://',
+            namezak: '',
+            zakazchik: '',
             vz_selected: '',
             dc_selected: '',
             resp_selected: '',
             resp_role_selected: '',
             vz_options: [],
             dateend: '',
-            somefile1: '',
+            somefile1: '', // TZ
             somefile1_obj: {name: '', size: 0},
             somefile2: '',
             somefile2_obj: {name: '', size: 0}
@@ -1148,6 +1152,8 @@ Vue.component('newcard-form', {
                 vidzak: this.vz_selected,
                 nomzak: this.nomzak,
                 linkzak: this.linkzak,
+                namezak: this.namezak,
+                zakazchik: this.zakazchik,
                 dealcat: this.dc_selected,
                 resp: this.resp_selected,
                 author: app.userInfo.result.ID,
@@ -1641,10 +1647,10 @@ function vueapp () {
                 {data:'zakazchik', head:'заказчик'},
                 {data:'nmc', head:'нмц'},
                 {data:'link_zak', head:'ссылка'},
-                {data:'date_end', head:'end date'},
-                {data:'somefile1', head:'file 1 id', 
+                {data:'date_end', head:'Дата'},
+                {data:'somefile1', head:'ID файла ТЗ', 
                     style:'text-align:right;width:100px',hstyle:'width:120px'},
-                {data:'f1_name', head:'some file 1 name', style:'font-size:60%'},
+                {data:'f1_name', head:'Техзадание', style:'font-size:60%'},
                 {data:'somefile2', head:'some file 2 id '},
                 {data:'f2_name', head:'some file 2 name'}
             ]
