@@ -49,6 +49,7 @@ class Maincntr extends AuxBase {
                 $npage = $params['npage'];
                 $rcount = $params['rcount'];
                 $role_id = $params['role_id'];
+                $user_id = $params['user_id'];
                 $strictroles = $params['strictroles'];
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -57,29 +58,31 @@ class Maincntr extends AuxBase {
                     if ($role_id && $strictroles) {
                         $sql = 'select c.*, v.vid_zak from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
-                         where c.state != 80 
-                        and resp_role_id = ?
+                        where c.state != 80 
+                        and (resp_role_id = ? or responsible = ?)
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
-                        $q->execute([$role_id, $npage * $rcount, $rcount]);
+                        $q->execute([$role_id, $user_id, $npage * $rcount, $rcount]);
                     } elseif($role_id) {
                         $sql = 'select c.*, v.vid_zak from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
-                         where c.state != 80 
+                        where c.state != 80 
+                        and (resp_role_id != ? or responsible = ?)
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
-                        $q->execute([$npage * $rcount, $rcount]);
-                    } else { // No access!
+                        $q->execute([$role_id, $user_id, $npage * $rcount, $rcount]);
+                    } else { // No access here!
                         $sql = 'select c.*, v.vid_zak from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
-                        where c.state != 80 and 0=1
+                        where c.state != 80 and (0=1  or responsible = ?)
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
-                        $q->execute([$npage * $rcount, $rcount]);
+                        $q->execute([$user_id, $npage * $rcount, $rcount]);
                         
                     }
                     $res = $q->fetchAll(PDO::FETCH_ASSOC);
                     $status = 'success';
+                    $cmt = json_encode($params);
                 } catch (PDOException $e) {
                     $status = 'error';
                     $res = $e;
@@ -396,6 +399,7 @@ $this -> log -> debug('set role', $params);
                 
                 $namezak = $values['namezak'];
                 $zakazchik = $values['zakazchik'];
+                $resp = $values['resp'];
 
                 $res = 'n/a';
                 $status = 'success';
@@ -428,7 +432,7 @@ $this -> log -> debug('set role', $params);
                         $zakazchik,
                         $values['dealcat'],
                         $values['author'],
-                        $values['resp'],
+                        $resp,
                         $values['resp_role_id'],
                         $values['resp'],
                         $dateend,

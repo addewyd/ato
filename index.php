@@ -338,8 +338,8 @@
             {{dealcats}}
     </div>
 
-<!--
-        <label for="responsible">Ответственный</label>
+
+        <label for="responsible">Исполнитель</label>
         <span style="color: rgb(255, 0, 0);">*</span>
         <p :class="{ 'control': true }" class="field">
             <select id="responsible" v-model="resp_selected"  v-validate="'required'"> 
@@ -348,7 +348,7 @@
             </option>
             </select>
         </p>
--->
+<!--
         <label for="resp_role">Исполнитель</label>
         <span style="color: rgb(255, 0, 0);">*</span>
         <p :class="{ 'control': true }" class="field">
@@ -358,7 +358,7 @@
             </option>
             </select>
         </p>
-
+-->
         <label for="vidzak">Вид закупки</label>
         <span style="color: rgb(255, 0, 0);">*</span>
         <p :class="{ 'control': true }" class="field">
@@ -476,7 +476,7 @@ Progress {{upprc}}%
         </div>
         
     <div class="top1">
-        Main work panel [ admin: {{admin}} ] {{userinfo.LAST_NAME}} 
+        Main work panel [ admin: {{admin}} ] {{userinfo.NAME}}  {{userinfo.LAST_NAME}} 
                 user role: {{currentRole.role}} <br />
         Responsibility: {{inRole()}} <br />
         <!-- {{sObject}} -->
@@ -489,7 +489,7 @@ Progress {{upprc}}%
     </div>
     
     <div class="top2">
-        Исполнитель {{sObject.resp}} <br/>
+        Исполнитель {{userinfo.NAME}}  {{userinfo.LAST_NAME}} (for {{sObject.resp}} )<br/>
             <!--
         role = {{currentRole}} <br />
         resp role id = {{rec.resp_role_id}} <br />

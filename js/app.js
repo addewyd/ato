@@ -118,7 +118,7 @@ application.prototype.loadGraph = function () {
     });
 };
 
-application.prototype.getGridDataSync = async function (npage, rcount, role_id) {
+application.prototype.getGridDataSync = async function (npage, rcount, role_id, user_id) {
     var dbname = this.dbname;;
     var self = this;
     console.log('ROLEID', role_id);
@@ -129,7 +129,8 @@ application.prototype.getGridDataSync = async function (npage, rcount, role_id) 
                 npage: npage, 
                 rcount: rcount,
                 strictroles: app.strictRole,
-                role_id: role_id
+                role_id: role_id,
+                user_id: user_id
             }, BX24.getAuth());
     return new Promise((resolve, reject) => {
         $.ajax({
@@ -139,7 +140,7 @@ application.prototype.getGridDataSync = async function (npage, rcount, role_id) 
             dataType: 'json',
             data: params}).done(
                 function (data) {
-                    console.log('resolve grid');
+                    console.log('resolve grid', data);
                     resolve(data.result);                    
                 }).fail(
                 function (e) {
@@ -402,8 +403,6 @@ application.prototype.getRoleId = function (role) {
     return false;
 };
 
-
-
 application.prototype.getNextStates = function(state) {
     var b_count = state.tr.length;
     if(b_count < 2) return false;
@@ -423,6 +422,14 @@ application.prototype.getNextStates = function(state) {
     return [t1, t2];
     
 };
+
+application.prototype.getStateRoleId = function(state) {
+    var t1 = this.graph.states.find(function (el) {
+        return parseInt(el.tr[0]) === state;
+    });
+    var role = t1.resp;
+    return this.getRoleId(role);
+}
 
 var app = new application();
 
@@ -559,10 +566,11 @@ Vue.component('main-grid', {
         
         fdata: async function (gdu) {
             var role = app.getRole(app.userInfo.result.ID);
+            var user_id = app.userInfo.result.ID;
             var sortKey = this.sortKey;
             var filterKey = this.filterKey && this.filterKey.toLowerCase();
             var order = this.sortOrders[sortKey] || 1;
-            var data = await app.getGridDataSync(this.npage, this.rcount, role.id); // this.data
+            var data = await app.getGridDataSync(this.npage, this.rcount, role.id, user_id); // this.data
             //console.log('Data', data);
             if (filterKey) {
             data = data.filter(function (row) {
@@ -647,10 +655,10 @@ Vue.component('main-grid', {
                         trstyle = 'color:green;'
                     }
                 }
-                else {
+                else if(key.replace === 'rsl') {
                     var lst = app.getAuxList(key.replace);
                     var f = lst.find(function(e,i,a){
-                        //console.log('E', e.ID, entry);
+                        //console.log('E', e.ID, entry, key.replace, ret);
                         var id = e.ID;
                         return id == ret ;
                     });
@@ -661,6 +669,9 @@ Vue.component('main-grid', {
                         ret =  'UNDEF!';
                         trstyle = 'color:green;'
                     }
+                }
+                else {
+                    
                 }
             }
             if(trstyle) {
@@ -966,7 +977,9 @@ Vue.component('main-form', {
                                     if(status == 'success') {
                                         bus.$emit('grid-update', 1);
                                         this.dirty = false;
-                                        mainform.show = false;
+                                        if(next) {
+                                            mainform.show = false;
+                                        }
                                     }
                                     else {
                                         console.log('error', resp);
@@ -1051,9 +1064,9 @@ Vue.component('main-form', {
             var ur = this.currentRole.role;
             var ar = this.sObject.resp;
             var rc;
-            console.log('urole', ur,  'arole', ar);
+            //console.log('urole', ur,  'arole', ar);
             if(typeof ar === 'string') {
-                console.log('role ok', app.options[0].strictroles==0);
+                //console.log('role ok', app.options[0].strictroles==0);
                 rc =  ar === '' ? (app.options[0].strictroles==0) : ur === ar;
             }
             else {
@@ -1063,6 +1076,9 @@ Vue.component('main-form', {
             }
             
             rc =  !!rc;
+            rc = (rc ||  (app.userInfo.result.ID == this.rec.responsible)); // responsibla always in role
+            rc = (rc || (this.currentRole.id == this.rec.resp_role_id));
+            //console.log('role rc', rc,app.userInfo.result.ID, this.rec.responsible);
             this.d_inRole = rc;
             return rc;
         },
@@ -1144,10 +1160,12 @@ Vue.component('newcard-form', {
         },
         save: function () {
             var self = this;
-            var role_id = this.resp_role_selected;
+            var init_state = 1;
+            //var role_id = this.resp_role_selected;
+            var role_id = app.getStateRoleId(init_state); // state = 1. start
             var data = {
                 folder_id: app.folder_id,
-                state: 1, // state:1 !!!!
+                state: init_state, // state:1 !!!!
                 author: app.userInfo.ID,
                 vidzak: this.vz_selected,
                 nomzak: this.nomzak,
@@ -1641,7 +1659,8 @@ function vueapp () {
                 {data:'deal_cat', head:'направление', replace:'dcl',
                     style:'word-wrap: break-word;font-size:70%;max-width:220px'},
                 {data:'author', head:'автор', replace:'rsl',hstyle:''},
-                {data:'resp_role_id', head:'исполнитель', replace:'rrl',hstyle:''},
+                {data:'responsible', head:'исполнитель', replace:'rsl',hstyle:''},
+                {data:'resp_role_id', head:'роль', replace:'rrl',hstyle:''},
                 {data:'nom_zak', head:'номер'},
                 {data:'name_zak', head:'заказ'},
                 {data:'zakazchik', head:'заказчик'},
