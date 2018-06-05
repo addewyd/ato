@@ -1,4 +1,16 @@
 (function () {
+    
+    window.v_alert = new Vue({
+        methods: {
+            show: function(msg) {
+                this.$dialog.alert(msg).then(function() {
+                    console.log('alert closed');
+                })
+            }
+        }
+    });    
+    
+    
     if (!BX24) {
         $('#main').empty();
         document.write('<h1>NO BX24!</h1>');
@@ -9,13 +21,14 @@
         BX24.init(function () {
             app.starting = true;
             var p3 = initapp();
+            //v_alert.show('test') // alert available from here
             p3.then(
                     function (d) {
 
                         var s = BX24.getScrollSize();
-                        console.log('initapp callback', s);
+                        //console.log('initapp callback', s);
                         BX24.resizeWindow(s.scrollWidth, 800, function (s) {
-                            console.log('resize callback', s);
+                            //console.log('resize callback', s);
                         });
                         vueapp();
                     }
@@ -99,6 +112,7 @@ application.prototype.loadGraph = function () {
     var params = array_merge({'operation': 'getGraph', 'dbname': app.dbname}, BX24.getAuth());
     console.log(params);
     var self = this;
+//    v_alert.show('test')
     return new Promise((resolve, reject) => {
         $.ajax({
             url: 'app/maincntr.php',
@@ -108,11 +122,30 @@ application.prototype.loadGraph = function () {
         }).done(
                 function (data) {
                     console.log('resolve graph');
-                    self.graph = data.result;
-                    resolve(data.result);
-                }).fail(
+                    //self.graph = data.result;
+                    var e = false;
+                    data.result.states.forEach(function(el) {
+                        // console.log(el);
+                        if(el.resp.trim() === '') {
+                            //console.log('empty resp!');
+
+                            e = true;
+                            return;
+                        }
+                    });
+                    if(e) {
+                        console.log('empty resp');
+                        v_alert.show('Errorin BP graph! empty resp');
+                        reject('empty resp');
+                    }
+                    else {
+                        self.graph = data.result;
+                        resolve(data.result);
+                    }
+                    }).fail(
                 function (e) {
                     console.log(e);
+                    v_alert.show('Error in BP ' + e);
                     reject(e);
                 })
     });
@@ -145,7 +178,7 @@ application.prototype.getGridDataSync = async function (npage, rcount, role_id, 
                 }).fail(
                 function (e) {
                     console.log(e);
-
+                    v_alert.show('Error ' + e);
                     reject(['error', e]);
                 });
     });
@@ -177,7 +210,7 @@ application.prototype.loadOptions = async function () {
                 }).fail(
                 function (e) {
                     console.log(e);
-
+                    v_alert.show('Error ' + e);
                     reject({error:e});
                 });
     });
@@ -194,6 +227,7 @@ application.prototype.getDbname = function () {
                 function (result) {
                     if (result.error()) {
                         console.error(result);
+                        v_alert.show('Error ' + result);
                         reject({error: result});
                     } else
                     {
@@ -226,6 +260,7 @@ application.prototype.getUserInfo = function() {
                 }).fail(
                 function (e) {
                     console.log(e);
+                    v_alert.show('Error ' + e);
                     reject({error: e});
                 });
     });
@@ -258,6 +293,7 @@ application.prototype.loadUserList = function() {
                 }).fail(
                 function (e) {
                     console.log('loadUserList error', e);
+                    v_alert.show('Error ' + e);
                     reject(['error', e]);
                 });
     });
@@ -280,8 +316,9 @@ application.prototype.loadVZak = function () {
                 }).fail(
                 function (e) {
                     console.log('VZE', e);
+                    v_alert.show('Error ' + e);
                     reject(['error', e]);
-                })
+                });
     });
 };
 
@@ -305,6 +342,7 @@ application.prototype.getRoles = function () {
                 }).fail(
                 function (e) {
                     console.log('RE', e);
+                    v_alert.show('Error ' + e);
                     reject(['error', e]);
                 });
     });
@@ -329,6 +367,7 @@ application.prototype.getUserRoles = function () {
                 }).fail(
                 function (e) {
                     console.log('URERE', e);
+                    v_alert.show('Error ' + e);
                     reject(['error', e]);
                 });
     });
@@ -369,6 +408,7 @@ application.prototype.loadDealCatList = function () {
                     }).fail(
                     function (e) {
                         console.log('LDCLE', e);
+                        v_alert.show('Error ' + e);
                         reject(['error', e]);
                     });
         } else {
@@ -500,16 +540,13 @@ async function initapp() {
     await app.getUserRoles();
     await app.getRoles();
     
-    var p0 = 
-            app.loadGraph();
+    var p0 = app.loadGraph();
     return p0;
 }
 
 var bus = new Vue;
 var optbutton;
 var newbutton;
-//var atooptions;
-//var newcard;
 var maingrid;
 var optusergrid;
 var mainform ;
@@ -517,13 +554,13 @@ var messagesbut;
 var archivebut;
 var editorbut;
 var dpicker;
+var v_alert;
 
 // .......................................................................
     
 Vue.component('main-grid', {
     template: '#grid-template',
     props: {
-        //data: Array,
         columns: Array,
         filterKey: String
     },
@@ -552,8 +589,7 @@ Vue.component('main-grid', {
     asyncComputed: {
         filteredData: {
             get: async function () {
-                return this.fdata(this.gridDataUpd); // parameter is required to update grid
-                
+                return this.fdata(this.gridDataUpd); // parameter is required to update grid                
             }
         }
     },
@@ -632,7 +668,7 @@ Vue.component('main-grid', {
                    trstyle = 'background-color:#dfad99;color:blue;';
                 }
             }
-            if(key.replace != undefined) {
+            if(key.replace !== undefined) {
                 //console.log('key2', key);
                 if(key.replace === 'state') {
                     var r = app.graph.states.find(function(el) {
@@ -667,7 +703,7 @@ Vue.component('main-grid', {
                     }
                     else {
                         ret =  'UNDEF!';
-                        trstyle = 'color:green;'
+                        trstyle = 'color:green;';
                     }
                 }
                 else {
@@ -692,21 +728,15 @@ Vue.component('main-grid', {
             this.gupd();
         },
         nextpage: function() {
-            //if() {
-               // return;
-           // }
             this.npage ++;
             this.gupd();            
         },
         click: function (id, state, entry) {
-            console.log('clicked ' + id);
-            //console.log('entry ', entry);
             mainform.itemId = id;
             mainform.gridLine = entry;
             mainform.itemState = state;
             mainform.show = false;
             mainform.show = true;
-            //bus.$emit('new-entry', entry);
         }
     }
 });
@@ -785,7 +815,7 @@ Vue.component('main-form', {
             dirty: false,
             rec: this.record,
             admin: app.userInfo.admin,
-            userinfo: app.userInfo.result,            
+            userinfo: app.userInfo.result
         };
     },
     computed: {
@@ -795,16 +825,13 @@ Vue.component('main-form', {
                 return el.tr[0] == this.state;
             }, this);
 
-            return res == undefined ? {err: 'state not found'} : res;
-
+            return res === undefined ? {err: 'state not found'} : res;
         },
         resp_role: function () {
             var res = app.roles.find(function (el) {
                 return el.id == this.rec.resp_role_id;
             }, this);
-
             return res == undefined ? {err: 'role not found'} : res.role;
-
         },
         nextStates: function() {
             return app.getNextStates(this.sObject);
@@ -915,8 +942,6 @@ Vue.component('main-form', {
                             // console.log(status, resp.result);
                             if (status == 'success') {
                                 bus.$emit('message-saved', 1);
-                                
-                                //self.$dialog.alert(resp.status);
                             } else {
                                 console.log('error', resp);
                                 self.$dialog.alert(resp);
@@ -924,6 +949,7 @@ Vue.component('main-form', {
                         },
                         error: function (e) {
                             console.log(e);
+                            v_alert.show('Error ' + e);
                         }
                     }
             );
@@ -983,12 +1009,12 @@ Vue.component('main-form', {
                                     }
                                     else {
                                         console.log('error', resp);
-                                        self.$dialog.alert(resp);
+                                        self.$dialog.alert('Error ' + resp);
                                     }
                                 },
                                 error: function (e) {
                                     console.log(e);
-                                    self.$dialog.alert(e);
+                                    self.$dialog.alert('Error ' + e);
                                 }
                             }
                     );
@@ -1025,10 +1051,11 @@ Vue.component('main-form', {
                                 mainform.show = false;
                             } else {
                                 console.log('error', resp);
-                                alert(resp);
+                                v_alert.show('Error ' + resp);
                             }
                         },
                         error: function (e) {
+                            v_alert.show('Error ' + e);
                             console.log(e);
                         }
                     }
@@ -1036,7 +1063,7 @@ Vue.component('main-form', {
         },
         cancel() {
             if(this.dirty) {
-                alert('some inputs are changed!');
+                v_alert.show('some inputs are changed!');
             }
             this.dirty = false;
             mainform.show = false;
@@ -1088,7 +1115,7 @@ Vue.component('main-form', {
             this.deleteCard(id);
         },
         doNothing: function() {
-            console.log('do nothing')
+            console.log('do nothing');
         
         }
     }
@@ -1166,7 +1193,7 @@ Vue.component('newcard-form', {
             var data = {
                 folder_id: app.folder_id,
                 state: init_state, // state:1 !!!!
-                author: app.userInfo.ID,
+                //author: app.userInfo.ID,
                 vidzak: this.vz_selected,
                 nomzak: this.nomzak,
                 linkzak: this.linkzak,
@@ -1258,12 +1285,12 @@ Vue.component('newcard-form', {
                                         //maingrid.show = !maingrid.show;
                                     } else {
                                         console.log('error', resp);
-                                        self.$dialog.alert(resp);
+                                        self.$dialog.alert('Error ' + resp);
                                     }
                                 },
                                 error: function (e) {
                                     console.log('ajax error', e);
-                                    self.$dialog.alert(e);
+                                    self.$dialog.alert('Error ' + e);
                                 }
                             }
                     );
@@ -1330,7 +1357,7 @@ Vue.component('atooptions-form', {
             role_options: array_merge([{'id':0,'role':'None'}],app.roles),
             role_sel: '',
             role_sel_id: ''
-        }
+        };
     },
 
     mounted: function () {
@@ -1397,10 +1424,11 @@ Vue.component('atooptions-form', {
 
                             } else {
                                 console.log('error', resp);
-                                self.$dialog.alert(resp);
+                                self.$dialog.alert('Error ' + resp);
                             }
                         },
                         error: function (e) {
+                            self.$dialog.alert('Error ' + e);
                             console.log(e);
                         }
                     }
@@ -1409,6 +1437,7 @@ Vue.component('atooptions-form', {
         set_role() {            
             console.log('set_role', this.selectedUser, this.role_sel_id); //?
             var dbname = app.dbname;
+            var self = this;
             // send data to server
             var params = array_merge({
                 'operation': 'setRole',
@@ -1429,7 +1458,7 @@ Vue.component('atooptions-form', {
                         bus.$emit('grid-update', 1);
                 }).fail(
                 function (e) {
-                    
+                    self.$dialog.alert('Error ' + e);
                     console.log(e);
                 });                
         },
@@ -1499,13 +1528,13 @@ Vue.component('ceditor', {
                                 self.content = JSON.stringify(resp.result, "", 4);
                             }
                             else {
-                                self.$dialog.alert(resp);
+                                self.$dialog.alert('Error '+ resp);
                                 console.log(resp); 
                             }
                         },
                         error: function (e) {
                             console.log(e);
-                                self.$dialog.alert(e);
+                                self.$dialog.alert('Error '+ e);
                         }
                     }
             );
@@ -1552,10 +1581,12 @@ Vue.component('archivegrid', {
                                 self.records = resp.result;
                             }
                             else {
+                                self.$dialog.alert('Error ' + resp);
                                 console.log(resp); 
                             }
                         },
                         error: function (e) {
+                            self.$dialog.alert('Error ' + e);
                             console.log(e);
                         }
                     }
@@ -1586,7 +1617,7 @@ Vue.component('msgbody', {
             messagesbut.showMessages = false;
         },
         click: function(e) {
-            
+            var self = this;
             console.log(this.whom, this.msgtext);
             if (this.whom) {
                 var dbname = app.dbname;
@@ -1610,6 +1641,7 @@ Vue.component('msgbody', {
                                 }
                             },
                             error: function (e) {
+                                self.$dialog.alert('Error ' + e);
                                 console.log(e);
                             }
                         }
@@ -1619,11 +1651,9 @@ Vue.component('msgbody', {
             }
         }
     }
-
 });
 
 function vueapp () {   
-
     mainform = new Vue({
         el: '#mainform0',
         data : {
