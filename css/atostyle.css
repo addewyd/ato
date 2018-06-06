@@ -165,6 +165,13 @@ div.top0 {
     border: 0px solid green;
 }
 
+.top-min {
+    font-weight: bold;
+    font-size: 75%;
+    font-style: italic;
+    color: #424956;
+}
+
 p.control {
     
 }
@@ -525,4 +532,30 @@ button.prevnext {
     cursor: pointer;
     transition: 160ms color linear,160ms background-color linear,160ms opacity linear,160ms padding linear;
     
+}
+
+
+.nextstates {
+    font-weight: bold;
+    font-size: 75%;
+    font-style: italic;
+}
+
+.nextstates:before {
+    content: 'Следующее состояние:';
+    display: block;
+    
+}
+
+.dd-li {
+    cursor: pointer;
+    list-style-type: none;
+}
+
+#dd-menu {
+    background: #dddddd;
+    border: 1px solid green;
+                   position: absolute;
+                   left: 42px;
+                   top: 150px;
 }

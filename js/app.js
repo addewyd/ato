@@ -106,6 +106,15 @@ function application() {
     this.roles = [];
     this.userRoles = [];
     this.dealCatList = undefined;
+    
+    this.col_vis = [
+        true,
+        true,
+        true,true,true,true,true,
+        true,true,true,true,
+        true,true,true,true,
+        true,true,true,true,true];
+    this.cols = [];
 }
 
 application.prototype.loadGraph = function () {
@@ -531,6 +540,10 @@ async function initapp() {
     app.userInfo = await app.getUserInfo();
 
     app.options = await app.loadOptions();
+    
+    // load user options
+    //app.useroptions = await app.loadUserOptions();
+    
     console.log('OPTS', app.options);
     app.strictRole = app.options[0].strictroles;
     app.folder_id = app.options[0].folder_id;
@@ -555,6 +568,7 @@ var archivebut;
 var editorbut;
 var dpicker;
 var v_alert;
+var ddmenu;
 
 // .......................................................................
     
@@ -564,12 +578,13 @@ Vue.component('main-grid', {
         columns: Array,
         filterKey: String
     },
-    data: function () {
+    data: function () {        
         var sortOrders = {};
         this.columns.forEach(function (key) {
             sortOrders[key.data] = 1;
         });
         return {
+            col_vis: app.col_vis,
             sortKey: '',
             sortOrders: sortOrders,
             gridDataUpd: false,  //  required to update grid
@@ -601,6 +616,8 @@ Vue.component('main-grid', {
     methods: {
         
         fdata: async function (gdu) {
+            //console.log('APPCOLS',app.cols);  //emty on start
+            this.col_vis = app.col_vis;
             var role = app.getRole(app.userInfo.result.ID);
             var user_id = app.userInfo.result.ID;
             var sortKey = this.sortKey;
@@ -609,9 +626,9 @@ Vue.component('main-grid', {
             var data = await app.getGridDataSync(this.npage, this.rcount, role.id, user_id); // this.data
             //console.log('Data', data);
             if (filterKey) {
-            data = data.filter(function (row) {
-                return Object.keys(row).some(function (key) {
-                    return String(row[key]).toLowerCase().indexOf(filterKey) > -1;
+                data = data.filter(function (row) {
+                    return Object.keys(row).some(function (key) {
+                        return String(row[key]).toLowerCase().indexOf(filterKey) > -1;
                     });
                 });
             }
@@ -629,6 +646,15 @@ Vue.component('main-grid', {
             this.sortKey = key;
             this.sortOrders[key] = this.sortOrders[key] * -1;
             this.gupd();
+        },
+        vcalc(key) {
+            var r = this.columns.findIndex(function(el) {
+                return el.data == key.data;
+            });
+            if(r > -1) {
+                return this.col_vis[r] ? 'display:table-cell':'display:none';
+            }
+            return 'display:table-cell';
         },
         scalc(entry, key) {
             //console.log('entry', entry)
@@ -737,6 +763,12 @@ Vue.component('main-grid', {
             mainform.itemState = state;
             mainform.show = false;
             mainform.show = true;
+        },
+        menu:function(event) {
+            console.log('menu', event);
+            var x = event.screenX;
+            var y = event.screenY;
+            ddmenu.open('#dd-menu',  {x:x, y:y});
         }
     }
 });
@@ -1002,7 +1034,7 @@ Vue.component('main-form', {
                                     // console.log(status, resp.result);
                                     if(status == 'success') {
                                         bus.$emit('grid-update', 1);
-                                        this.dirty = false;
+                                        self.dirty = false;
                                         if(next) {
                                             mainform.show = false;
                                         }
@@ -1654,6 +1686,69 @@ Vue.component('msgbody', {
 });
 
 function vueapp () {   
+    
+    ddmenu = new Vue({
+        data: {
+            items: app.cols,
+            options: [],
+            id: 'dd-menu',
+            d_vc: app.col_vis,
+            visible: false
+        },
+        template: '#ddmenu-template',
+        mounted: 
+             
+            function () {
+                var cnt = 0;
+                this.items = app.cols.map(i => {
+                    return {data:i.data,head:i.head,n:cnt++}
+                });
+                console.log(this.items)
+        },
+        
+        methods: {
+            open: function(e, opts) {
+                if(this.visible) {
+                    console.log('menu close');
+                    $('#'+this.id).hide();
+                    this.$destroy();
+                    this.visible = false;
+                    // save app.col_vis in options
+                }
+                else {
+                    console.log('menu open');
+                    this.options = opts;
+                    this.$mount(e);
+                    $('#'+this.id).show();
+                    this.visible = true;
+                }
+            }, 
+            fl: function(i) {
+                //console.log('fl1', i, app.cols);
+            },
+            click(e, item) {
+                var self = this;
+                console.log('click li', item, e);
+
+                //app.col_vis[0] = !app.col_vis[0];
+                //app.col_vis[3] = !app.col_vis[3];
+
+                $('#' + self.id).hide();
+                self.fl(item.i);
+                self.visible = false;
+                bus.$emit('grid-update', 1);
+                self.$destroy();
+            },
+            is_visible: function(d) {
+                
+            },
+            changev(d) {
+                
+            }
+            
+        }
+    });
+    
     mainform = new Vue({
         el: '#mainform0',
         data : {
@@ -1705,7 +1800,13 @@ function vueapp () {
             ]
         },
         mounted: function () {
-
+                app.cols = this.gridColumns.map(i => {
+                    return {
+                        data:i.data,
+                        head:i.head
+                    }
+                }
+            );
         }
     });
 

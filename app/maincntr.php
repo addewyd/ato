@@ -267,6 +267,8 @@ $this -> log -> debug('set role', $params);
                 $new_state = $next === 'next' ? $so : $so_cur;
                 
                 try {
+                    //  begin transaction
+                    $pdo->beginTransaction();
                     //if($action === 'archive' && $next === 'next') {
                         if($resp_role_id) {
                             $sql = 'update cards set '
@@ -323,7 +325,6 @@ $this -> log -> debug('set role', $params);
                                     $q = $pdo->prepare($sql);
                                     $q->execute([$role_id]);
                                     $res = $q->fetchAll(PDO::FETCH_ASSOC);
-//$this -> log -> debug('NEXTRESP 2', $res);                            
 
                                     foreach ($res as $k => $v) {
                                         $message = "YOUR ROLE is $n.\n" .
@@ -338,9 +339,11 @@ $this -> log -> debug('set role', $params);
                     else {
                         
                     }
+                    $pdo->commit();
                 } catch (PDOException $e) {
                     $status = 'error';
                     $res = $e;
+                    $pdo->rollback();
                 }
                 
                 break;
@@ -414,15 +417,13 @@ $this -> log -> debug('set role', $params);
                         . 'values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                $today = date("Y-m-d H:i:s"); 
-                
-                
+                $today = date("Y-m-d H:i:s");                                 
                 $dateend = $this -> reformat_date($values['dateend']);
                 
                 try {
                     $q = $pdo->prepare($sql);
 
-                    $q->execute(array(
+                    $q->execute([
                         $today,
                         $values['state'],
                         $values['vidzak'],
@@ -442,7 +443,7 @@ $this -> log -> debug('set role', $params);
                         $somefile2_id,
                         $somefile2_url,
                         $somefile2_name
-                    ));
+                    ]);
                 
                     $today = date("Y-m-d H:i:s"); 
                     $msg = "New card";
@@ -477,11 +478,6 @@ $this -> log -> debug('set role', $params);
                         $this->sendMsg($v['user_id'], $message);
                     }
                                     
-                    //$message = 'You have got responsibilirty for the ato record ' .
-                      //  json_encode($values);
-                    // No resp!!!
-                    //$this -> sendMsg($values['resp'], $message);
-                    
                 } catch (PDOException $e) {
                     $status = 'error';
                     $res = $e;
@@ -606,8 +602,7 @@ $this -> log -> debug('set role', $params);
                             
                             $msg = 'New private message from ATO ' .
                                     "Card Id $id <br /> Author id $author name $author_name <br /> Text $message";
-                            $this -> sendMsg($whom, $msg);
-                            
+                            $this -> sendMsg($whom, $msg);                            
                         }
                 
                 } catch (PDOException $e) {
@@ -615,8 +610,7 @@ $this -> log -> debug('set role', $params);
                     $res = $e;
                 }
                 break;
-          
-            
+                
             default:
                 $res = 'unknown op';
                 $status = 'error';
@@ -625,10 +619,7 @@ $this -> log -> debug('set role', $params);
         }
         $this->returnResult(array('status' => $status, 'result' => $res, 'cmt' => $cmt));
     }
-
 }
-
-;
 
 $manager = new Maincntr($log, $_REQUEST);
 

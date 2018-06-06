@@ -63,7 +63,7 @@
                         </atooptions-form>
                     </div>  
                     <div slot="footer">
-                        Ofooter
+                        
                     </div>
                 </optmodal>
             </span>
@@ -79,7 +79,7 @@
                         <ceditor/>
                     </div>  
                     <div slot="footer">
-                        Ofooter
+                        
                     </div>
                 </editormodal>
                 
@@ -124,7 +124,7 @@
     <div>
         <textarea  class="content-input bpedit" v-model="content"></textarea>
 
-        <button class="all-but btn-secondary" @click="cancel">Cancel</button>
+        <button class="all-but btn-secondary" @click="cancel">Отмена</button>
     </div>
 </script>     
 
@@ -147,7 +147,7 @@
               </button>
               <button  class="all-but btn-secondary"
                 @click="cancel()">
-                Cancel
+                Отмена
               </button>    
               </div>
     </div>
@@ -163,7 +163,7 @@
     </div>
               <button  class="all-but btn-secondary"
                 @click="cancel()">
-                Cancel
+                Отмена
               </button>    
               </div>
     </div>
@@ -286,6 +286,7 @@
     
 <script type="text/x-template" id="grid-template">
       <div class="main-grid">
+      <div id='dd-menu'></div>
     <div>
         <button class="prevnext" @click="prevpage()">prev</button> 
         Page: {{npage+1}} 
@@ -295,8 +296,8 @@
   <table cellsapcing="0" class="grid">
 <thead>
       <tr class="grid-head">
-  <th class="action"></th>
-        <th v-for="key in columns" v-bind:style="key.hstyle"
+        <th class="action" v-on:click="menu($event)"></th>
+        <th v-for="key in columns" v-bind:style="key.hstyle+';'+vcalc(key)"
           @click="sortBy(key.data)"
           :class="{ active: sortKey == key.data }">
           {{ key.head | capitalize }}
@@ -308,11 +309,10 @@
     <tbody>
       <tr v-for="entry in filteredData">
         <td>
-            <button class="grid-act-but" v-on:click="click(entry['id'],entry['state'], entry)">
-               
+            <button class="grid-act-but" v-on:click="click(entry['id'],entry['state'], entry)">               
             </button>
         </td>
-        <td v-for="key in columns" v-bind:style="key.style">
+        <td v-for="key in columns" v-bind:style="key.style+';'+vcalc(key)">
           <!--{{scalc(entry,key)}}-->
               <span v-html="scalc(entry,key)"></span>
         </td>
@@ -328,6 +328,21 @@
   </div>
 </script>
   
+<script type="text/x-template" id="ddmenu-template">     
+<div id="dd-menu">
+<ul>
+<li v-for="item in items" 
+    class="dd-li">
+        <input v-on:change="changev(item.data)" 
+            type="checkbox" id="checkbox-vc" v-model="d_vc[item.n]">
+        <label for="checkbox-vc">{{item.head}} {{item.n}}</label>        
+        </li>
+
+</ul>
+</div>
+</script>
+
+    
 <script type="text/x-template" id="formnew-template">    
 <form id="form-new-form">                                                 
     <div id="formnew-template-div">
@@ -475,7 +490,7 @@ Progress {{upprc}}%
             Текущее состояние {{sObject.name}}
         </div>
         
-    <div class="top1">
+    <div class="top-min">
         Main work panel [ admin: {{admin}} ] {{userinfo.NAME}}  {{userinfo.LAST_NAME}} 
                 user role: {{currentRole.role}} <br />
         Responsibility: {{inRole()}} <br />
@@ -552,8 +567,10 @@ Progress {{upprc}}%
     </div>
     
 <div id="main-buttons2" class="top4" v-if="b_count()==2">
-<div v-if="nextStates">
+<div v-if="nextStates" class="nextstates">
+
 Next: {{nextStates[0].name}} <br />
+    
 </div>
 <div v-else>
 No next, it is the END
@@ -568,9 +585,11 @@ No next, it is the END
     <button class="all-but btn-secondary" v-on:click="cancel">Отмена</button>
 </div>
 <div id="main-buttons3" class="top4" v-if="b_count()==3">
-<div v-if="nextStates">
+<div v-if="nextStates" class="nextstates">
+
 Yes: {{nextStates[0].name}} <br />
 No: {{nextStates[1].name}} <br />
+    
 </div>
 <div v-else>
 No next, it is the END
@@ -600,16 +619,15 @@ No next, it is the END
         </div> <!-- main-left -->
         <div class="main-right">
         <div class="main-right-inner">
-        comments for card id {{rec.id}} <br />
+        История и переписка (Карточка {{rec.id}}) <br />
             
-            <div class="comments-enter">
-                Message
+            <div class="comments-enter">               
                 
                 <input type="checkbox" id="checkbox" v-model="privatemsg">
-                <label for="checkbox">private {{ privatemsg }}</label>
+                <label for="checkbox">Личное</label>
     
                 <div v-if="privatemsg">   
-                    <label for="main-whom">Private to</label>
+                    <label for="main-whom">Кому</label>
                     <p :class="{ 'control': true }" class="field">
                 <select id="main-whom" name="main-whom" v-model="whom_selected" > 
                 <option v-for="option in whom_options" v-bind:value="option.ID">
@@ -624,7 +642,7 @@ No next, it is the END
                 <textarea class="content-input" v-model="message"></textarea>
                 </p>
             </div>
-            <button class="all-but btn-success" @click="saveMessage(id,sObject.tr[0])">Add message</button>
+            <button class="all-but btn-success" @click="saveMessage(id,sObject.tr[0])">Отправить</button>
             </div>    
             
             
