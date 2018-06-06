@@ -717,7 +717,7 @@ Vue.component('main-grid', {
                         trstyle = 'color:green;'
                     }
                 }
-                else if(key.replace === 'rsl') {
+                else if(key.replace === 'rsl' || key.replace === 'dcl' ) {
                     var lst = app.getAuxList(key.replace);
                     var f = lst.find(function(e,i,a){
                         //console.log('E', e.ID, entry, key.replace, ret);
