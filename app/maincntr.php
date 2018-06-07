@@ -204,7 +204,7 @@ class Maincntr extends AuxBase {
                 $dbname = $params['dbname'];
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$this -> log -> debug('set role', $params);                
+                // $this -> log -> debug('set role', $params);                
                 $user = $params['user'];
                 $role = $params['role'];
                 if(!$role) {

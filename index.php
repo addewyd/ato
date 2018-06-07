@@ -9,35 +9,17 @@
         <div id="topbuttons">
         <span id="newcard0">
             <button id="newbutton" class="topb"
-                    @click="show = true">
+                    @click="click(true)">
                 Новая</button>
             <newmodal
-                v-if="show" @close="show= false">
-                <div slot="body">
-                
-                    <newcard-form>
-                    </newcard-form>
-                
+                v-if="show" @close="show = false">
+                <div slot="body">                
+                    <newcard-form></newcard-form>                
                 </div>
             </newmodal>
         </span>            
-            <span id="msg-win" v-if="false">
-                <button id="messagesbut" class="topb" @click="showMessages = true">
-                    Messages</button>
-                <msgmodal
-                v-if="showMessages" @close="showMessages = false">
-                <h3 slot="header">Сообщения</h3>
-                    <div slot="body">
-                        <msgbody :columns="gridColumns" ></msgbody>
-                    </div>
-                    <div slot="footer">
-                    dfooter
-                    </div>
-                </msgmodal>
-            </span>
-
             <span id="archive-win">
-                <button id="archivebut" class="topb" @click="show = true">
+                <button id="archivebut" class="topb" @click="click(true)">
                    Архив</button>
                 <archivemodal
                 v-if="show" @close="show = false">
@@ -46,13 +28,12 @@
                         <archivegrid></archivegrid>
                     </div>
                     <div slot="footer">
-                    dfooter
                     </div>
                 </archivemodal>
             </span>
             <span id="opt-win" v-if="userinfo.admin">
                 <button id="optbutton" class="topb" 
-                    @click="show = true">
+                    @click="click(true)">
                     Настройки
                 </button>
                 <optmodal
@@ -62,35 +43,31 @@
                         <atooptions-form :columns="gridColumns">                
                         </atooptions-form>
                     </div>  
-                    <div slot="footer">
-                        
+                    <div slot="footer">                        
                     </div>
                 </optmodal>
             </span>
             <span id="ceditor" v-if="userinfo.admin">
-                <button id="editorbut" class="topb" @click="show = true">
+                <button id="editorbut" class="topb" @click="click(true)">
                     Edit BP
                 </button>
                 <editormodal
                     v-if="show" @close="show = false">
                     <h3 slot="header">Editor</h3>
-                    <div slot="body">
-                        
+                    <div slot="body">                        
                         <ceditor/>
                     </div>  
-                    <div slot="footer">
-                        
+                    <div slot="footer">                        
                     </div>
-                </editormodal>
-                
-            </span>            
-                       
+                </editormodal>                
+            </span>                                   
         </div>
-
         
         <div id="maingrid" class="main-grid" v-if="show" v-cloak>
             <form id="search">
-                Search <input name="query" v-model="searchQuery">
+                <div class="filter">
+                Фильтр <input class="filter" name="query" v-model="searchQuery">
+                </div>
             </form>
             <main-grid
                 :columns="gridColumns"
@@ -112,60 +89,60 @@
                         </main-form>
                     </div>
                 </div>
-                <div slot="footer">
-                    
+                <div slot="footer">                    
                 </div>
             </mainmodal>                    
         </div>
     </div>
 
-
 <script type="text/x-template" id="ceditor-template">
     <div>
         <textarea  class="content-input bpedit" v-model="content"></textarea>
-
         <button class="all-but btn-secondary" @click="cancel">Отмена</button>
     </div>
 </script>     
 
-<script type="text/x-template" id="msgbody-template">
-    <div>
-        msg list here<br/>
-        user list <br/>
-        <opt-user-grid :columns="columns">
-        </opt-user-grid>
-        <div>
-            Кому: {{whom.NAME}}
-        </div>
-        <p class="field">
-        <textarea  class="content-input" v-model="msgtext"></textarea>
-        </p>
-        <div>
-              <button class="modal-default-button all-but btn-success"
-                @click="click()">
-                OK
-              </button>
-              <button  class="all-but btn-secondary"
-                @click="cancel()">
-                Отмена
-              </button>    
-              </div>
-    </div>
-</script>    
-
 <script type="text/x-template" id="archive-template">
     <div class="arch-all">
-    <div class="arch-recs">
-    <div class="arch-rec" v-for="rec in records">
-        {{rec.id}} {{rec.cdate}} {{rec.nom_zak}} {{rec.link_zak}}
-        <hr />            
-    </div>
-    </div>
-              <button  class="all-but btn-secondary"
+    <!--
+        <div class="arch-recs">
+            <div class="arch-rec" v-for="rec in records">
+                {{rec.id}} {{rec.cdate}} {{rec.nom_zak}} {{rec.link_zak}}
+                {{name_zak}} {{zakazchik}}
+                {{date_end}}
+                <hr />            
+            </div>
+        </div>
+        -->
+        <table class="grid">
+           <thead>
+               <tr class="grid-head">
+                   <th>1</th>
+                   <th>2</th>
+                   <th>3</th>
+                   <th>4</th>
+                   <th>5</th>
+                   <th>6</th>
+                   <th>7</th>
+                   </tr>
+               </thead>
+               <tbody>
+                   <tr v-for="rec in records">
+                       <td>{{rec.id}}</td>
+                       <td>{{rec.cdate}}</td>
+                       <td>{{rec.nom_zak}}</td>
+                       <td>{{rec.link_zak}}</td>
+                       <td>{{rec.name_zak}}</td>
+                       <td>{{rec.zakazchik}}</td>
+                       <td>{{rec.date_end}}</td>
+                       </tr>
+                   </tbody>
+        </table>
+        <button  class="all-but btn-secondary"
                 @click="cancel()">
                 Отмена
-              </button>    
-              </div>
+        </button>    
+    
     </div>
 </script>    
     
@@ -337,7 +314,6 @@
             type="checkbox" id="checkbox-vc" v-model="d_vc[item.n]">
         <label for="checkbox-vc">{{item.head}} {{item.n}}</label>        
         </li>
-
 </ul>
 </div>
 </script>

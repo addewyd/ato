@@ -133,25 +133,23 @@ application.prototype.loadGraph = function () {
                     console.log('resolve graph');
                     //self.graph = data.result;
                     var e = false;
-                    data.result.states.forEach(function(el) {
+                    data.result.states.forEach(function (el) {
                         // console.log(el);
-                        if(el.resp.trim() === '') {
+                        if (el.resp.trim() === '') {
                             //console.log('empty resp!');
-
                             e = true;
                             return;
                         }
                     });
-                    if(e) {
+                    if (e) {
                         console.log('empty resp');
                         v_alert.show('Errorin BP graph! empty resp');
                         reject('empty resp');
-                    }
-                    else {
+                    } else {
                         self.graph = data.result;
                         resolve(data.result);
                     }
-                    }).fail(
+                }).fail(
                 function (e) {
                     console.log(e);
                     v_alert.show('Error in BP ' + e);
@@ -166,8 +164,8 @@ application.prototype.getGridDataSync = async function (npage, rcount, role_id, 
     console.log('ROLEID', role_id);
     var params = array_merge(
             {
-                'operation': 'getGridData', 
-                'dbname': dbname, 
+                operation: 'getGridData', 
+                dbname: dbname, 
                 npage: npage, 
                 rcount: rcount,
                 strictroles: app.strictRole,
@@ -334,8 +332,11 @@ application.prototype.loadVZak = function () {
 application.prototype.getRoles = function () {
     var dbname = app.dbname;
     console.log('getRoles', dbname);
-    var params = array_merge({'operation': 'getRoles',
-        'dbname': dbname}, BX24.getAuth());
+    var params = array_merge(
+            {
+                operation: 'getRoles',
+                dbname: dbname
+            }, BX24.getAuth());
     var self = this;
     return new Promise((resolve, reject) => {
         $.ajax({
@@ -346,7 +347,7 @@ application.prototype.getRoles = function () {
             data: params}).done(
                 function (data) {
                     console.log('resolve roles', data.result);
-                    self.roles = data.result;
+                    //self.roles = data.result;
                     resolve(data.result);
                 }).fail(
                 function (e) {
@@ -371,7 +372,7 @@ application.prototype.getUserRoles = function () {
             data: params}).done(
                 function (data) {
                     console.log('resolve user roles', data.result);
-                    self.userRoles = data.result;
+//                    self.userRoles = data.result;
                     resolve(data.result);
                 }).fail(
                 function (e) {
@@ -484,15 +485,6 @@ var app = new application();
 
 application.prototype.dates = {
     convert:function(d) {
-        // Converts the date in d to a date-object. The input can be:
-        //   a date object: returned without modification
-        //  an array      : Interpreted as [year,month,day]. NOTE: month is 0-11.
-        //   a number     : Interpreted as number of milliseconds
-        //                  since 1 Jan 1970 (a timestamp) 
-        //   a string     : Any format supported by the javascript engine, like
-        //                  "YYYY/MM/DD", "MM/DD/YYYY", "Jan 31 2009" etc.
-        //  an object     : Interpreted as an object with year, month and date
-        //                  attributes.  **NOTE** month is 0-11.
         return (
             d.constructor === Date ? d :
             d.constructor === Array ? new Date(d[0],d[1],d[2]) :
@@ -503,13 +495,6 @@ application.prototype.dates = {
         );
     },
     compare:function(a,b) {
-        // Compare two dates (could be of any type supported by the convert
-        // function above) and returns:
-        //  -1 : if a < b
-        //   0 : if a = b
-        //   1 : if a > b
-        // NaN : if a or b is an illegal date
-        // NOTE: The code inside isFinite does an assignment (=).
         return (
             isFinite(a=this.convert(a).valueOf()) &&
             isFinite(b=this.convert(b).valueOf()) ?
@@ -518,12 +503,6 @@ application.prototype.dates = {
         );
     },
     inRange:function(d,start,end) {
-        // Checks if date in d is between dates in start and end.
-        // Returns a boolean or NaN:
-        //    true  : if d is between start and end (inclusive)
-        //    false : if d is before start or after end
-        //    NaN   : if one or more of the dates is illegal.
-        // NOTE: The code inside isFinite does an assignment (=).
        return (
             isFinite(d=this.convert(d).valueOf()) &&
             isFinite(start=this.convert(start).valueOf()) &&
@@ -540,18 +519,18 @@ async function initapp() {
     app.userInfo = await app.getUserInfo();
 
     app.options = await app.loadOptions();
-    
-    // load user options
-    //app.useroptions = await app.loadUserOptions();
-    
+        
     console.log('OPTS', app.options);
+    
     app.strictRole = app.options[0].strictroles;
     app.folder_id = app.options[0].folder_id;
+    
     await app.loadUserList();
     
     await app.loadDealCatList();
-    await app.getUserRoles();
-    await app.getRoles();
+    app.userRoles = await app.getUserRoles();
+    
+    app.roles = await app.getRoles();
     
     var p0 = app.loadGraph();
     return p0;
@@ -563,7 +542,6 @@ var newbutton;
 var maingrid;
 var optusergrid;
 var mainform ;
-var messagesbut;
 var archivebut;
 var editorbut;
 var dpicker;
@@ -666,20 +644,15 @@ Vue.component('main-grid', {
                 var c;
                 if(d) {
                     var dt = app.dates.convert(d);
-                    if(dt == NaN) {
-                        c = NaN;
-                    }
-                    else {
-                        c = app.dates.compare(new Date(), dt);
-                    }
+                    
+                    c = dt == NaN ? NaN : app.dates.compare(new Date(), dt);
                     //console.log('converted: ', dt);
                     
                     if(c > 0) {
                         trstyle = 'background-color:#ffdddd;color:red;';
                     }
                     else if(c == 0) {
-                        trstyle = 'background-color:#dffdad;color:brown;';
-                        
+                        trstyle = 'background-color:#dffdad;color:brown;';                        
                     }
                     else if(c == NaN) {
                         trstyle = 'background-color:#dfad99;color:blue;';
@@ -733,7 +706,7 @@ Vue.component('main-grid', {
                     }
                 }
                 else {
-                    
+                    // 
                 }
             }
             if(trstyle) {
@@ -761,7 +734,8 @@ Vue.component('main-grid', {
             mainform.itemId = id;
             mainform.gridLine = entry;
             mainform.itemState = state;
-            mainform.show = false;
+            // mainform.show = false;
+            ddmenu.close();
             mainform.show = true;
         },
         menu:function(event) {
@@ -772,7 +746,6 @@ Vue.component('main-grid', {
         }
     }
 });
-
 
 
 Vue.component('opt-user-grid', {
@@ -923,29 +896,24 @@ Vue.component('main-form', {
                         url: 'app/maincntr.php',
                         type: 'POST',
                         dataType: 'json',
-                        data: params,
-                        success: function (resp) {
+                        data: params}).
+                        done(function (resp) {
                             var status = resp.status;
                             // console.log(status, resp.result);
                             self.cmsg = resp.result;
-                            resolve(resp.result);
                             if (status == 'success') {
+                                resolve(resp.result);                            
                             } else {
                                 console.log('error', resp);
                                 reject(resp);
                             }
-                        },
-                        error: function (e) {
+                        }).fail(function (e) {
                             console.log(e);
-                                reject(e);
-                        }
-                    }
+                            reject(e);
+                        }                    
                 );
             });            
         },        
-        isResponsible: function() {
-            return this.inRole();
-        },
         saveMessage: function (id, state, action = '') {
             console.log('saveMessage', id, this.userinfo);
             var dbname = app.dbname;
@@ -1008,17 +976,17 @@ Vue.component('main-form', {
             var self = this;
             // send data to server
             var params = array_merge({
-                'operation': 'saveandnext',
-                'dbname': dbname,
-                'next': next ? 'next' : 'cur',
-                'id': id,
+                operation: 'saveandnext',
+                dbname: dbname,
+                next: next ? 'next' : 'cur',
+                id: id,
                 resp_role_id: nrid,
-                'rec': this.rec,
-                'author': this.userinfo.ID,
-                'state': state,
-                'so': so,
-                'so_cur': state.tr[0],
-                'nextresp': nextresp
+                rec: this.rec,
+                author: this.userinfo.ID,
+                state: state,
+                so: so,
+                so_cur: state.tr[0],
+                nextresp: nextresp
             }, BX24.getAuth());
             console.log(params);
             this.$validator.validateAll().then((result) => {
@@ -1054,7 +1022,6 @@ Vue.component('main-form', {
                 }
                 console.log('validate errors!');
             });
-            // this.$parent.show = false; ?
         },
         deleteCard(id) {
             var card_author = this.rec.author;
@@ -1077,7 +1044,7 @@ Vue.component('main-form', {
                         success: function (resp) {
                             var status = resp.status;
                             // console.log(status, resp.result);
-                            if (status == 'success') {
+                            if (status === 'success') {
                                 bus.$emit('grid-update', 1);
                                 this.dirty = false;
                                 mainform.show = false;
@@ -1110,8 +1077,7 @@ Vue.component('main-form', {
         },
         mDirty(e) {
             console.log('MD', e);
-                this.dirty = true;
-           
+                this.dirty = true;           
         },
         get_name:function(id) {
             var rc = app.userList2.find(function(el) {
@@ -1147,11 +1113,9 @@ Vue.component('main-form', {
             this.deleteCard(id);
         },
         doNothing: function() {
-            console.log('do nothing');
-        
+            console.log('do nothing');        
         }
     }
-
 });
 
 Vue.component('newcard-form', {
@@ -1502,10 +1466,6 @@ Vue.component('atooptions-form', {
 
 Vue.component('date-picker', vuejsDatepicker);
 
-Vue.component('msgmodal', {
-    template: '#modal-template'
-});
-
 Vue.component('editormodal', {
     template: '#modal-template'
 }); 
@@ -1609,7 +1569,7 @@ Vue.component('archivegrid', {
                         success: function (resp) {
                             var status = resp.status;
                             if (status == 'success') {
-                                console.log('getRecords ok'); 
+                                console.log('getRecords ok',resp.result); 
                                 self.records = resp.result;
                             }
                             else {
@@ -1627,64 +1587,6 @@ Vue.component('archivegrid', {
     }
 });
 
-Vue.component('msgbody', {
-    template: '#msgbody-template',
-    props: {
-        columns: Array
-    },
-    data: function () {
-        return {
-            whom: '',
-            msgtext: ''
-        };
-    },
-    mounted: function () {
-        var self = this;
-        bus.$on('msg-whom', function (n) {
-            self.whom = n;
-        });
-    },
-    methods: {
-        cancel: function() {
-            messagesbut.showMessages = false;
-        },
-        click: function(e) {
-            var self = this;
-            console.log(this.whom, this.msgtext);
-            if (this.whom) {
-                var dbname = app.dbname;
-                // send data to server
-                var params = array_merge({
-                    'operation': 'sendMsg',
-                    'dbname': dbname,
-                    'whom': this.whom.ID,
-                    'msg': this.msgtext
-                }, BX24.getAuth());
-                $.ajax(
-                        {
-                            url: 'app/auxcntr.php',
-                            type: 'POST',
-                            dataType: 'json',
-                            data: params,
-                            success: function (resp) {
-                                var status = resp.status;
-                                if (status == 'success') {
-                                    messagesbut.showMessages = false; 
-                                }
-                            },
-                            error: function (e) {
-                                self.$dialog.alert('Error ' + e);
-                                console.log(e);
-                            }
-                        }
-                );
-
-                messagesbut.showMessages = false;  // криво
-            }
-        }
-    }
-});
-
 function vueapp () {   
     
     ddmenu = new Vue({
@@ -1696,8 +1598,7 @@ function vueapp () {
             visible: false
         },
         template: '#ddmenu-template',
-        mounted: 
-             
+        mounted:              
             function () {
                 var cnt = 0;
                 this.items = app.cols.map(i => {
@@ -1709,11 +1610,7 @@ function vueapp () {
         methods: {
             open: function(e, opts) {
                 if(this.visible) {
-                    console.log('menu close');
-                    $('#'+this.id).hide();
-                    this.$destroy();
-                    this.visible = false;
-                    // save app.col_vis in options
+                    this.close();
                 }
                 else {
                     console.log('menu open');
@@ -1723,21 +1620,21 @@ function vueapp () {
                     this.visible = true;
                 }
             }, 
+            close: function() {
+                $('#'+this.id).hide();
+                //this.$destroy();
+                this.visible = false;                
+            },
             fl: function(i) {
                 //console.log('fl1', i, app.cols);
             },
             click(e, item) {
                 var self = this;
-                console.log('click li', item, e);
-
-                //app.col_vis[0] = !app.col_vis[0];
-                //app.col_vis[3] = !app.col_vis[3];
-
                 $('#' + self.id).hide();
                 self.fl(item.i);
                 self.visible = false;
                 bus.$emit('grid-update', 1);
-                self.$destroy();
+                //self.$destroy();
             },
             is_visible: function(d) {
                 
@@ -1816,8 +1713,10 @@ function vueapp () {
             show: false
         },
         methods: {
-            click: function () {  
+            click: function (c) {  
                 console.log('new click');
+                ddmenu.close();
+                this.show = c;
             }
         }
     });
@@ -1840,25 +1739,10 @@ function vueapp () {
             }            
         },
         methods: {
-            click: function (ev) {
+            click: function (c) {
+                ddmenu.close();
+                this.show = c;
             }
-
-        }
-    });
-    
-    messagesbut = new Vue({
-        el: '#msg-win',
-        data: {
-            showMessages: false,
-            gridColumns: [
-                ['ID','id'],
-                ['NAME','user']
-            ]
-        },
-        methods: {
-            click: function (ev) {
-            }
-
         }
     });
     
@@ -1868,8 +1752,9 @@ function vueapp () {
             show: false
         },
         methods: {
-            click: function (ev) {
-                console.log('archive click');                
+            click: function (c) {
+                ddmenu.close();
+                this.show = c;
             }
         }
     }); 
@@ -1878,11 +1763,14 @@ function vueapp () {
         el: '#ceditor',
         data: {
             show: false,
-            userinfo: app.userInfo,
-            content: 'aaa',            
-            height: 300
-            
-        }
+            userinfo: app.userInfo
+        },
+        methods: {
+            click: function (c) {
+                ddmenu.close();
+                this.show = c;
+            }
+        }        
     });
         
 }

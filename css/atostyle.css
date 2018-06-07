@@ -31,7 +31,7 @@ table.grid tbody {
     border: 1px solid #eeeeee;
 }
 .grid-head {
-background-color: #eef2f4;    
+    background-color: #eef2f4;    
 }
 thead > tr, tbody{
  /*   display:block; */
@@ -380,13 +380,30 @@ textarea.content-input {
     transition: 220ms all ease;
 }
 
-.bpedit {
-    height: 440px;
+div.filter {
+    margin: 6px 0 10px 0px;
+    font: 11px/13px "Helvetica Neue",Helvetica,Arial,sans-serif;    
 }
 
-input.file-input {
-    
-opacity: 0;
+input.filter {
+    min-height: 26px;
+    max-width: 100%;
+    width: 120px;
+    outline: 0;
+    border: 1px solid #c4c7cc;
+    border-radius: 1px;
+    background-color: #fff;
+    color: #424956;
+    font: 11px/13px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    transition: 220ms all ease;
+}
+
+.bpedit {
+    height: 480px;
+}
+
+input.file-input {    
+    opacity: 0;
     font-size: 150px;
     position: absolute;
     top: 0;
@@ -553,6 +570,7 @@ button.prevnext {
 }
 
 #dd-menu {
+    z-index: 5100;
     background: #dddddd;
     border: 1px solid green;
                    position: absolute;
