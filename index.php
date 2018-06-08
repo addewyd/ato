@@ -23,7 +23,7 @@
                    Архив</button>
                 <archivemodal
                 v-if="show" @close="show = false">
-                <h3 slot="header">archive</h3>
+                <h3 slot="header" v-cloak>Archive</h3>
                     <div slot="body">
                         <archivegrid></archivegrid>
                     </div>
@@ -38,7 +38,7 @@
                 </button>
                 <optmodal
                     v-if="show" @close="show = false">
-                    <h3 slot="header">Options</h3>
+                    <h3 slot="header" v-cloak>Настройки</h3>
                     <div slot="body">
                         <atooptions-form :columns="gridColumns">                
                         </atooptions-form>
@@ -53,7 +53,7 @@
                 </button>
                 <editormodal
                     v-if="show" @close="show = false">
-                    <h3 slot="header">Editor</h3>
+                    <h3 slot="header" v-cloak>Editor</h3>
                     <div slot="body">                        
                         <ceditor/>
                     </div>  
@@ -75,10 +75,10 @@
             </main-grid>
         </div>
 
-        <div id="mainform0"  v-cloak>
+        <div id="mainform0" v-cloak>
             <mainmodal
                 v-if="show" @close="show= false">
-                <h3 slot="header">Card {{itemId}}</h3>
+                <h3 slot="header" v-cloak>Card {{itemId}}</h3>
                 <div slot="body">        
                     <div id="mainform">
                         <main-form
@@ -265,11 +265,11 @@
       <div class="main-grid">
       <div id='dd-menu'></div>
     <div>
-        <button class="prevnext" @click="prevpage()">prev</button> 
-        Page: {{npage+1}} 
-        <button  class="prevnext" @click="nextpage()">next</button> 
+        <button class="prevnext" @click="prevpage()">&nbsp;<span class="farrow">←</span></button> 
+        Страница: {{npage+1}} 
+        <button  class="prevnext" @click="nextpage()"><span class="farrow">→</span>&nbsp;</button> 
     </div>
-      
+<div class="clear"></div>      
   <table cellsapcing="0" class="grid">
 <thead>
       <tr class="grid-head">
@@ -297,9 +297,9 @@
     </tbody>
   </table>
     <div>
-        <button class="prevnext" @click="prevpage()">prev</button> 
-        Page: {{npage+1}} 
-        <button  class="prevnext" @click="nextpage()">next</button> 
+        <button class="prevnext" @click="prevpage()">&nbsp;<span class="farrow">←</span></button> 
+        Страница: {{npage+1}} 
+        <button  class="prevnext" @click="nextpage()"><span class="farrow">→</span>&nbsp;</button> 
     </div>
   
   </div>
@@ -322,14 +322,12 @@
 <script type="text/x-template" id="formnew-template">    
 <form id="form-new-form">                                                 
     <div id="formnew-template-div">
-    <h2>Новая карточка</h2>
+    <h2>Новая карточка</h2
     <div v-if="debug" class="debug-out">Debug output</div>
     <div v-if="debug"  class="debug">
         {{vz_options}}<br/>
             {{dealcats}}
     </div>
-
-
         <label for="responsible">Исполнитель</label>
         <span style="color: rgb(255, 0, 0);">*</span>
         <p :class="{ 'control': true }" class="field">
@@ -451,7 +449,7 @@
 Progress {{upprc}}%
 </div>
         <div>
-            <button type="button" class="all-but btn-success" v-on:click="save">Сохранить</button>
+            <button :disabled="disablebuttons" type="button" class="all-but btn-success" v-on:click="save">Сохранить</button>
             <button type="button" class="all-but btn-secondary" v-on:click="cancel">Отмена</button>
         </div>
      </div>     
@@ -545,7 +543,7 @@ Progress {{upprc}}%
 <div id="main-buttons2" class="top4" v-if="b_count()==2">
 <div v-if="nextStates" class="nextstates">
 
-Next: {{nextStates[0].name}} <br />
+Next: {{nextStates[0].name}} ({{nextStates[0].tr[0]}})<br />
     
 </div>
 <div v-else>
@@ -553,8 +551,10 @@ No next, it is the END
 </div>
     <span v-if="d_inRole">
         <button class="all-but btn-success" 
-        @click="save(id, sObject, sObject.tr[0])">Save</button>
+            :disabled="disablebuttons"
+            @click="save(id, sObject, sObject.tr[0])">Save</button>
         <button class="all-but btn-primary" v-if="nextStates"
+            :disabled="disablebuttons"
             @click="saveandnext(id, sObject, sObject.tr[1],nextStates[0].resp)">
             Save &amp; Next to {{sObject.tr[1]}}</button>
     </span>        
@@ -563,19 +563,23 @@ No next, it is the END
 <div id="main-buttons3" class="top4" v-if="b_count()==3">
 <div v-if="nextStates" class="nextstates">
 
-Yes: {{nextStates[0].name}} <br />
-No: {{nextStates[1].name}} <br />
+Yes: {{nextStates[0].name}}  ({{nextStates[0].tr[0]}})<br />
+No: {{nextStates[1].name}}  ({{nextStates[1].tr[0]}})<br />
     
 </div>
 <div v-else>
 No next, it is the END
 </div>
     <span v-if="d_inRole">
-        <button class="all-but btn-success" @click="save(id, sObject, sObject.tr[0])">Save</button>
+        <button class="all-but btn-success" 
+            :disabled="disablebuttons"
+            @click="save(id, sObject, sObject.tr[0])">Save</button>
         <button class="all-but btn-primary" v-if="nextStates"
+            :disabled="disablebuttons"
             @click="saveandnext(id, sObject, sObject.tr[1],nextStates[0].resp)">
             YES &amp; Next to {{sObject.tr[1]}}</button>
         <button class="all-but btn-warning" v-if="nextStates"
+            :disabled="disablebuttons"
             @click="saveandnext(id, sObject, sObject.tr[2],nextStates[0].resp)">
             NO &amp; Next to {{sObject.tr[2]}}</button>
     </span>

@@ -17,3 +17,4 @@ Vue.use(AsyncComputed);
 Vue.use(VuejsDialog.default);
 var app = require('./js/apptest.js')
 
+

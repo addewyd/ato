@@ -5,7 +5,7 @@
             show: function(msg) {
                 this.$dialog.alert(msg).then(function() {
                     console.log('alert closed');
-                })
+                });
             }
         }
     });    
@@ -14,25 +14,19 @@
     if (!BX24) {
         $('#main').empty();
         document.write('<h1>NO BX24!</h1>');
-        
+
         alert('no BX24');
         return;
     } else {
         BX24.init(function () {
             app.starting = true;
-            var p3 = initapp();
-            //v_alert.show('test') // alert available from here
-            p3.then(
-                    function (d) {
-
-                        var s = BX24.getScrollSize();
-                        //console.log('initapp callback', s);
-                        BX24.resizeWindow(s.scrollWidth, 800, function (s) {
-                            //console.log('resize callback', s);
-                        });
-                        vueapp();
-                    }
-            );
+            initapp(function () {
+                var s = BX24.getScrollSize();
+                BX24.resizeWindow(s.scrollWidth, 800, function (s) {
+                    //console.log('resize callback', s);
+                });
+                vueapp();
+            });
         });
     }
     
@@ -90,12 +84,13 @@
   
 })();
 
-
 function application() {
     this.debug = false;
     this.starting = false;
+    
     //this.strictRole = true;
     //this.folder_id = 1039;  // set it or create at the installation jr in 'options'
+    
     this.options = [];
     this.graph = [];
     
@@ -146,7 +141,7 @@ application.prototype.loadGraph = function () {
                         v_alert.show('Errorin BP graph! empty resp');
                         reject('empty resp');
                     } else {
-                        self.graph = data.result;
+//                        self.graph = data.result;
                         resolve(data.result);
                     }
                 }).fail(
@@ -241,9 +236,9 @@ application.prototype.getDbname = function () {
                         var data = result.data();
                         dbname = data[0].PROPERTY_VALUES.dbname;
                         console.log('resolve dbname', dbname);
-                        resolve(dbname)
+                        resolve(dbname);
                     }
-                })
+                });
     });
 };
 
@@ -290,13 +285,16 @@ application.prototype.loadUserList = function() {
             data: params}).done(
                 function (data) {
                     console.log('resolve userlist', data.result);
-                    self.userList = data.result;
-                    var a = self.userList.result;
-                    self.userList2 = a.map(i => {
+                    //self.userList = data.result;
+                    var a = data.result.result;                    
+                    //self.userList2
+                    var b = a.map(i => {
                         return {ID:i.ID, NAME: i.NAME + ' ' + i.LAST_NAME};
                     });
-                    console.log('userList2', self.userList2);
-                    resolve(data.result.result);
+                    
+                    console.log('userList2', b);
+                    resolve([data.result, b]);
+                    
                 }).fail(
                 function (e) {
                     console.log('loadUserList error', e);
@@ -384,13 +382,13 @@ application.prototype.getUserRoles = function () {
 };
 
 application.prototype.getAuxList = function(k) {
-    if(k == 'dcl') {
+    if(k === 'dcl') {
         return app.dealCatList;
     }
-    else if(k == 'rsl') {
+    else if(k === 'rsl') {
         return app.userList2;  //  not the same
     }
-    else if(k == 'rrl') {
+    else if(k === 'rrl') {
         return app.roles;
     }
     else {
@@ -413,7 +411,7 @@ application.prototype.loadDealCatList = function () {
                 data: params}).done(
                     function (data) {
                         console.log('LDCL', data.result[0]);
-                        self.dealCatList = data.result[0];  // ??
+                        //self.dealCatList = data.result[0];  // ??
                         resolve(data.result[0]);
                     }).fail(
                     function (e) {
@@ -511,29 +509,29 @@ application.prototype.dates = {
             NaN
         );
     }
-}
+};
 
-
-async function initapp() {
+async function initapp(cb) {
     app.dbname = await app.getDbname();
     app.userInfo = await app.getUserInfo();
 
     app.options = await app.loadOptions();
-        
-    console.log('OPTS', app.options);
     
     app.strictRole = app.options[0].strictroles;
     app.folder_id = app.options[0].folder_id;
     
-    await app.loadUserList();
+    var u = await app.loadUserList();
+    app.userList = u[0];
+    app.userList2 = u[1];
     
-    await app.loadDealCatList();
+    if(app.dealCatList === undefined)
+        app.dealCatList = await app.loadDealCatList();
     app.userRoles = await app.getUserRoles();
     
     app.roles = await app.getRoles();
+    app.graph = await app.loadGraph();
     
-    var p0 = app.loadGraph();
-    return p0;
+    cb();
 }
 
 var bus = new Vue;
@@ -805,11 +803,12 @@ Vue.component('main-form', {
     props: {
         id: String,
         state: String,
-        record: Object
+        record: Object        
     },
     data: function () {
         return {
             debug: app.debug,
+            disablebuttons: false,
             d_inRole: false,
             privatemsg: true,
             whom_selected: '',
@@ -959,7 +958,10 @@ Vue.component('main-form', {
         },
 
         saveandnext: function (id, state, so, nextresp) {
-            this.saveandnext0(id, state, so, true, nextresp);            
+            if(!this.disablebuttons) {
+                this.disablebuttons = true;
+                this.saveandnext0(id, state, so, true, nextresp);
+            }
         },
         
         saveandnext0: function (id, state, so, next, nextresp) {
@@ -1018,10 +1020,12 @@ Vue.component('main-form', {
                                 }
                             }
                     );
+                    this.disablebuttons = false;
                     return;
                 }
                 console.log('validate errors!');
             });
+            this.disablebuttons = false;
         },
         deleteCard(id) {
             var card_author = this.rec.author;
@@ -1035,13 +1039,12 @@ Vue.component('main-form', {
                 'id': id,
                 'author': user
             }, BX24.getAuth());  
-            $.ajax(
-                    {
+            $.ajax({
                         url: 'app/maincntr.php',
                         type: 'POST',
                         dataType: 'json',
-                        data: params,
-                        success: function (resp) {
+                        data: params
+                    }).done(function (resp) {
                             var status = resp.status;
                             // console.log(status, resp.result);
                             if (status === 'success') {
@@ -1052,13 +1055,10 @@ Vue.component('main-form', {
                                 console.log('error', resp);
                                 v_alert.show('Error ' + resp);
                             }
-                        },
-                        error: function (e) {
+                        }).fail(function (e) {
                             v_alert.show('Error ' + e);
                             console.log(e);
-                        }
-                    }
-            );            
+                        });            
         },
         cancel() {
             if(this.dirty) {
@@ -1070,10 +1070,10 @@ Vue.component('main-form', {
         b_count: function () {
             return (this.sObject.tr.length);
         },
-        doaction(id, state) {
-            console.log('Action ', id, state);
+        doaction(aid, state) {
+            console.log('Action ', aid, state);
             this.message = state.action;
-            this.saveMessage(id, state.tr[0], state.action);
+            this.saveMessage(aid, state.tr[0], state.action);
         },
         mDirty(e) {
             console.log('MD', e);
@@ -1123,6 +1123,7 @@ Vue.component('newcard-form', {
     data: function () {
         return {
             debug: app.debug,
+            disablebuttons: false,
             showupload: false,
             upprc: 0,
             vidzak: '',
@@ -1182,6 +1183,10 @@ Vue.component('newcard-form', {
             //console.log(event, data);
         },
         save: function () {
+            if(this.disablebuttons) {
+                return;
+            }
+            this.disablebuttons = true;
             var self = this;
             var init_state = 1;
             //var role_id = this.resp_role_selected;
@@ -1234,17 +1239,12 @@ Vue.component('newcard-form', {
                                 contentType: false,
                                 enctype: 'multipart/form-data',
                                 data: fdata, // params,
-/// ............................
-                                xhr: function ()
-                                {
-                                    var jqXHR = null;
-                                    if (window.ActiveXObject)
-                                    {
-                                        jqXHR = new window.ActiveXObject("Microsoft.XMLHTTP");
-                                    } else
-                                    {
-                                        jqXHR = new window.XMLHttpRequest();
-                                    }
+
+                                xhr: function () {
+                                    var jqXHR =  window.ActiveXObject ?
+                                        new window.ActiveXObject("Microsoft.XMLHTTP") :
+                                        new window.XMLHttpRequest();
+                                    
                                     jqXHR.onloadstart = function (e) {
                                         self.emitter('start', e);
                                     };
@@ -1252,10 +1252,8 @@ Vue.component('newcard-form', {
                                         self.emitter('finish', e);
                                     };
                                     //Upload progress
-                                    jqXHR.upload.addEventListener("progress", function (evt)
-                                    {
-                                        if (evt.lengthComputable)
-                                        {
+                                    jqXHR.upload.addEventListener("progress", function (evt) {
+                                        if (evt.lengthComputable) {
                                             var percentComplete = Math.round((evt.loaded * 100) / evt.total);
                                             self.emitter('progress', percentComplete);
                                         }
@@ -1263,38 +1261,35 @@ Vue.component('newcard-form', {
                                     //Download progress
                                     jqXHR.addEventListener("progress", function (evt)
                                     {
-                                        if (evt.lengthComputable)
-                                        {
+                                        if (evt.lengthComputable) {
                                             var percentComplete = Math.round((evt.loaded * 100) / evt.total);
                                             self.emitter('progress', percentComplete);
                                         }
                                     }, false);
 
                                     return jqXHR;
-                                },
-/// ............................
-                                success: function (resp) {
-                                    var status = resp.status;
-                                    if (status == 'success') {
-                                        bus.$emit('grid-update', 1);
-                                        newbutton.show = false;
-                                        //maingrid.show = !maingrid.show;
-                                    } else {
-                                        console.log('error', resp);
-                                        self.$dialog.alert('Error ' + resp);
-                                    }
-                                },
-                                error: function (e) {
-                                    console.log('ajax error', e);
-                                    self.$dialog.alert('Error ' + e);
                                 }
-                            }
-                    );
+                            }).done(function (resp) {
+                                var status = resp.status;
+                                if (status === 'success') {
+                                    bus.$emit('grid-update', 1);
+                                    newbutton.show = false;
+                                } else {
+                                    console.log('error', resp);
+                                    self.$dialog.alert('Error ' + resp);
+                                }
+                            }).fail(function (e) {
+                                console.log('ajax error', e);
+                                self.$dialog.alert('Error ' + e);
+                            });
+
+                    this.disablebuttons = false;
                     return;
                 }
                 console.log('validate errors!', this.$validator);
                 self.$dialog.alert('validate errors!');
             });
+            this.disablebuttons = false;
         },
         filesChange(name, files) {
             console.log('FC', name);
@@ -1329,7 +1324,6 @@ Vue.component('newcard-form', {
 
             return dd + '.' + mm + '.' + yy;
         }
-
     }
 });
 
@@ -1387,7 +1381,7 @@ Vue.component('atooptions-form', {
         }
     },
     methods: {
-        changesr: function() {
+        changesr: function () {
             console.log('change sr', this.d_strictroles);
             this.strictroles = this.d_strictroles ? 1 : 0;
         },
@@ -1400,37 +1394,33 @@ Vue.component('atooptions-form', {
                 'dbname': dbname,
                 'folder_id': this.folder_id,
                 'strictroles': this.strictroles,
-                'admin': this.isadmin,                
+                'admin': this.isadmin,
                 'userId': this.userinfo.ID // app.userInfo.result.ID
             }, BX24.getAuth());
             console.log(params);
-            $.ajax(
-                    {
-                        url: 'app/maincntr.php',
-                        type: 'POST',
-                        dataType: 'json',
-                        data: params,
-                        success: function (resp) {
-                            var status = resp.status;
-                            if (status == 'success') {
-                                optbutton.show = false;
-                                
-                                app.options[0].strictroles = self.strictroles;
-                                app.options[0].folder_id = self.folder_id;
-
-                            } else {
-                                console.log('error', resp);
-                                self.$dialog.alert('Error ' + resp);
-                            }
-                        },
-                        error: function (e) {
-                            self.$dialog.alert('Error ' + e);
-                            console.log(e);
+            $.ajax({
+                url: 'app/maincntr.php',
+                type: 'POST',
+                dataType: 'json',
+                data: params
+            }).done(
+                    function (resp) {
+                        var status = resp.status;
+                        if (status === 'success') {
+                            optbutton.show = false;
+                            app.options[0].strictroles = self.strictroles;
+                            app.options[0].folder_id = self.folder_id;
+                        } else {
+                            console.log('error', resp);
+                            self.$dialog.alert('Error ' + resp);
                         }
-                    }
-            );
+                    }).fail(
+                    function (e) {
+                        self.$dialog.alert('Error ' + e);
+                        console.log(e);
+                    });
         },
-        set_role() {            
+        set_role() {
             console.log('set_role', this.selectedUser, this.role_sel_id); //?
             var dbname = app.dbname;
             var self = this;
@@ -1441,22 +1431,19 @@ Vue.component('atooptions-form', {
                 'user': this.selectedUser.ID,
                 'role': this.role_sel_id
             }, BX24.getAuth());
-    //console.log(params);
             $.ajax({
                 url: 'app/maincntr.php',
                 async: true,
                 type: 'POST',
                 dataType: 'json',
-                data: params}).done(
-                    function (data) {
-                        console.log('set role ok', data);
-                        bus.$emit('user-grid-update', 1); 
-                        bus.$emit('grid-update', 1);
-                }).fail(
-                function (e) {
+                data: params}).done(function (data) {
+                    console.log('set role ok', data);
+                    bus.$emit('user-grid-update', 1);
+                    bus.$emit('grid-update', 1);
+                }).fail(function (e) {
                     self.$dialog.alert('Error ' + e);
                     console.log(e);
-                });                
+                });
         },
         cancel() {
             optbutton.show = false;
@@ -1497,10 +1484,10 @@ Vue.component('ceditor', {
         this.load();
     },
     methods: {
-        cancel: function() {
+        cancel: function () {
             editorbut.show = false;
         },
-        load: function() {
+        load: function () {
             var self = this;
             var dbname = app.dbname;
             // send data to server
@@ -1508,29 +1495,24 @@ Vue.component('ceditor', {
                 'operation': 'getGraph',
                 'dbname': dbname
             }, BX24.getAuth());
-            $.ajax(
-                    {
-                        url: 'app/maincntr.php',
-                        type: 'POST',
-                        dataType: 'json',
-                        data: params,
-                        success: function (resp) {
-                            var status = resp.status;
-                            if (status == 'success') {
-                                self.content = JSON.stringify(resp.result, "", 4);
-                            }
-                            else {
-                                self.$dialog.alert('Error '+ resp);
-                                console.log(resp); 
-                            }
-                        },
-                        error: function (e) {
-                            console.log(e);
-                                self.$dialog.alert('Error '+ e);
-                        }
-                    }
-            );
-        }                    
+            $.ajax({
+                url: 'app/maincntr.php',
+                type: 'POST',
+                dataType: 'json',
+                data: params
+            }).done(function (resp) {
+                var status = resp.status;
+                if (status == 'success') {
+                    self.content = JSON.stringify(resp.result, "", 4);
+                } else {
+                    self.$dialog.alert('Error ' + resp);
+                    console.log(resp);
+                }
+            }).fail(function (e) {
+                console.log(e);
+                self.$dialog.alert('Error ' + e);
+            });
+        }
     }
 });
 
@@ -1548,7 +1530,7 @@ Vue.component('archivegrid', {
         this.getRecords();
     },
     methods: {
-        cancel: function() {
+        cancel: function () {
             this.show = false;
             archivebut.show = false;
         },
@@ -1560,29 +1542,24 @@ Vue.component('archivegrid', {
                 'operation': 'getArchive',
                 'dbname': dbname
             }, BX24.getAuth());
-            $.ajax(
-                    {
-                        url: 'app/maincntr.php',
-                        type: 'POST',
-                        dataType: 'json',
-                        data: params,
-                        success: function (resp) {
-                            var status = resp.status;
-                            if (status == 'success') {
-                                console.log('getRecords ok',resp.result); 
-                                self.records = resp.result;
-                            }
-                            else {
-                                self.$dialog.alert('Error ' + resp);
-                                console.log(resp); 
-                            }
-                        },
-                        error: function (e) {
-                            self.$dialog.alert('Error ' + e);
-                            console.log(e);
-                        }
-                    }
-            );
+            $.ajax({
+                url: 'app/maincntr.php',
+                type: 'POST',
+                dataType: 'json',
+                data: params
+            }).done(function (resp) {
+                var status = resp.status;
+                if (status === 'success') {
+                    console.log('getRecords ok', resp.result);
+                    self.records = resp.result;
+                } else {
+                    self.$dialog.alert('Error ' + resp);
+                    console.log(resp);
+                }
+            }).fail(function (e) {
+                self.$dialog.alert('Error ' + e);
+                console.log(e);
+            });
         }
     }
 });
@@ -1654,15 +1631,6 @@ function vueapp () {
             itemState: '',
             gridLine: {}
     },
-    mounted: function() {
-        console.log('mf mount', app.userInfo.admin);  
-            //var s = BX24.getScrollSize();
-            //BX24.resizeWindow(s.scrollWidth, 800, function(s) {
-              //  console.log('resize callback 2', s);
-            //});
-
-    },  
-    
     methods: {
         test: function() {}
         }
@@ -1676,11 +1644,12 @@ function vueapp () {
             gridColumns: [
                 {data:'id', head:'ИД'}, 
                 {data:'state', head:'стат', replace:'state',
-                    style:'word-wrap: break-word;font-size:70%;max-width:220px'}, 
+                    style:'word-wrap: break-word;font-size:70%;max-width:220px;font-weight:bold'}, 
                 {data:'vid_zak', head:'вид'}, 
                 {data:'deal_cat', head:'направление', replace:'dcl',
                     style:'word-wrap: break-word;font-size:70%;max-width:220px'},
-                {data:'author', head:'автор', replace:'rsl',hstyle:''},
+                {data:'author', 
+                    head:'автор', replace:'rsl', style:'font-weight:bold',hstyle:''},
                 {data:'responsible', head:'исполнитель', replace:'rsl',hstyle:''},
                 {data:'resp_role_id', head:'роль', replace:'rrl',hstyle:''},
                 {data:'nom_zak', head:'номер'},
@@ -1693,7 +1662,7 @@ function vueapp () {
                     style:'text-align:right;width:100px',hstyle:'width:120px'},
                 {data:'f1_name', head:'Техзадание', style:'font-size:60%'},
                 {data:'somefile2', head:'some file 2 id '},
-                {data:'f2_name', head:'some file 2 name'}
+                {data:'f2_name', head:'some file 2 name', style:'font-size:60%'}
             ]
         },
         mounted: function () {

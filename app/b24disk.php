@@ -11,7 +11,7 @@ class Disk extends Bitrix24Entity {
         $o->log->debug('FILE', $file);
         $res = $this->client->call(
                 'disk.folder.uploadFile', ['id' => $folder_id]);
-$res = $res['result'];
+        $res = $res['result'];
         $o->log->debug('disk.folder.uploadFile', $res);
         if (!$res)
             return $res;
@@ -70,8 +70,7 @@ $res = $res['result'];
 
             $response = json_decode($response, true);
             $log->debug('curlresp', $response);
-
-            return $response['result'];
+            return isset($response['result']) ? $response['result'] : $response;
         }
     }
 }

@@ -61,7 +61,8 @@ table.grid tr td {
 
 table.grid tr.grid-head th {
     padding: 0 10px!important;
-    font: 12px/40px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font: 600 12px/40px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    /*font-weight: bold;*/
     vertical-align: middle;
     white-space: nowrap;
   cursor: pointer;
@@ -293,6 +294,10 @@ p.control {
     clear: both;
 }
 
+#mainform0 {
+    display: inline;
+}
+
 .main-center {
     border: 0px solid green;
 }
@@ -300,6 +305,7 @@ p.control {
     float: left;
     width: 55%;
     border: 0px solid yellow;
+    height:420px;
 }
 
 /* comments */
@@ -311,6 +317,7 @@ p.control {
     border-left: 1px solid #000000;
     height: 400px;
     overflow: auto;
+    height:420px;
 }
 
 .main-right-inner {
@@ -323,6 +330,8 @@ p.control {
 }
 .whole-msg {
     background-color: #dddddd;
+    margin: 6px;
+    padding: 6px;
 }
 
 
@@ -381,7 +390,8 @@ textarea.content-input {
 }
 
 div.filter {
-    margin: 6px 0 10px 0px;
+    float: right;
+    margin: 6px 30px 10px 0px;
     font: 11px/13px "Helvetica Neue",Helvetica,Arial,sans-serif;    
 }
 
@@ -502,6 +512,10 @@ button.all-but {
     transition: 160ms color linear,160ms background-color linear,160ms opacity linear,160ms padding linear;
 }
 
+.all-but:disabled {
+    background-color: gray;
+    color: graytext;
+}
 
 button.ok-but {
     background-color: green;
@@ -535,7 +549,7 @@ button.prevnext {
     display: inline-block;
     box-sizing: border-box;
     padding: 0 6px;
-    margin: 0px 0px 5px 0px;
+    margin: 0px 0px 10px 0px;
     height: 39px;
     outline: 0;
     border: 0;
@@ -548,9 +562,15 @@ button.prevnext {
     font: 600 12px/39px "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
     cursor: pointer;
     transition: 160ms color linear,160ms background-color linear,160ms opacity linear,160ms padding linear;
-    
+    background: white;
 }
 
+span.farrow {
+    font: 500 24px/42px "Fira Sans", Helvetica,Arial,sans-serif;
+    color: gray;
+    vertical-align: middle;
+
+}
 
 .nextstates {
     font-weight: bold;
