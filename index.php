@@ -97,6 +97,14 @@
 
 <script type="text/x-template" id="ceditor-template">
     <div>
+    <div>
+    <div style="float:left;width:20%">Блок-схема процесса</div>
+    <div class="bp-img" @click="togglew()" style="overflow:auto" :style="'cursor:'+zcurs">
+        <img :width="iwidth" src="BP.png" alt=""/>
+    </div>
+    </div>
+    <div class="clear"></div>
+    JSON
         <textarea  class="content-input bpedit" v-model="content"></textarea>
         <button class="all-but btn-secondary" @click="cancel">Отмена</button>
     </div>
@@ -700,7 +708,7 @@ Vue.config.devtools = true;
 <style>
 
 </style>
-<link rel="stylesheet" type="text/css" href="css/dgstyle.css" />
+<link rel="stylesheet" type="text/css" href="css/dgstyle.css?1" />
 
     </body>
 </html>

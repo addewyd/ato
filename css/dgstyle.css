@@ -8,8 +8,9 @@ and open the template in the editor.
     Author     : user
 */
 
-    .dg-container {
+.dg-container {
     z-index: 5000;
+    overflow: auto;
 }
 
 .dg-main-content {

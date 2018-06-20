@@ -1,39 +1,8 @@
 (function () {
     
-    window.v_alert = new Vue({
-        methods: {
-            show: function(msg) {
-                this.$dialog.alert(msg).then(function() {
-                    console.log('alert closed');
-                });
-            }
-        }
-    });    
-    
-    
-    if (!BX24) {
-        $('#main').empty();
-        document.write('<h1>NO BX24!</h1>');
-
-        alert('no BX24');
-        return;
-    } else {
-        BX24.init(function () {
-            app.starting = true;
-            initapp(function () {
-                var s = BX24.getScrollSize();
-                BX24.resizeWindow(s.scrollWidth, 800, function (s) {
-                    //console.log('resize callback', s);
-                });
-                vueapp();
-            });
-        });
-    }
-    
-     var getClass = function (object) {
+    var getClass = function (object) {
        return Object.prototype.toString.call(object).slice(8, -1);
-     };
-  
+    };
     var isValidCollection = function (obj) {
         try {
             return (
@@ -81,7 +50,61 @@
         }
         return arr1;
     };
-  
+    
+    
+    VuejsDialog.default.prototype.warn = function(message = null, options = {}){
+        if(getClass(message) !== 'String') {
+            var body = '';
+            var title = 'Error';
+            if(message.title && message.body) {
+                body = message.body;
+                title = message.title;
+            } else {
+                body = message;
+            }
+            if(getClass(body) !== 'String') {
+                body = '<div style="font-size:70%;word; white-space: normal;word-wrap:normal;">' 
+                    + JSON.stringify(body) + '</div>';
+            }
+        }
+        else {
+            body = message;
+        }
+        options = array_merge(options, {okText:'Закрыть', html:true});
+        
+        return this.alert({title:title,body:body}, options);
+    };
+    
+    window.v_alert = new Vue({
+        methods: {
+            show: function(msg) {
+                this.$dialog.warn(msg).then(function() {
+                    console.log('alert closed');
+                });
+            }
+        }
+    });    
+    
+    
+    if (!BX24) {
+        $('#main').empty();
+        document.write('<h1>NO BX24!</h1>');
+
+        alert('no BX24');
+        return;
+    } else {
+        BX24.init(function () {
+            app.starting = true;
+            initapp(function () {
+                var s = BX24.getScrollSize();
+                BX24.resizeWindow(s.scrollWidth, 800, function (s) {
+                    //console.log('resize callback', s);
+                });
+                vueapp();
+            });
+        });
+    }
+        
 })();
 
 function application() {
@@ -115,8 +138,8 @@ function application() {
 application.prototype.loadGraph = function () {
     var params = array_merge({'operation': 'getGraph', 'dbname': app.dbname}, BX24.getAuth());
     console.log(params);
-    var self = this;
-//    v_alert.show('test')
+//    var self = this;
+    //v_alert.show({title:'ok', body:params});
     return new Promise((resolve, reject) => {
         $.ajax({
             url: 'app/maincntr.php',
@@ -126,36 +149,42 @@ application.prototype.loadGraph = function () {
         }).done(
                 function (data) {
                     console.log('resolve graph');
-                    //self.graph = data.result;
+                    console.log('status', data.status);
                     var e = false;
-                    data.result.states.forEach(function (el) {
+                    //self.graph = data.result;
+                    if(data.status === 'success') {
+                        data.result.states.forEach(function (el) {
                         // console.log(el);
-                        if (el.resp.trim() === '') {
-                            //console.log('empty resp!');
-                            e = true;
-                            return;
-                        }
-                    });
-                    if (e) {
-                        console.log('empty resp');
-                        v_alert.show('Errorin BP graph! empty resp');
-                        reject('empty resp');
-                    } else {
+                            if (el.resp.trim() === '') {
+                                e = true;
+                                return;
+                            }
+                        });
+                    
+                        if (e) {
+                            console.log('empty resp');
+                            v_alert.show('Errorin BP graph! empty resp');
+                            reject('empty resp');
+                        } else {
 //                        self.graph = data.result;
-                        resolve(data.result);
+                            resolve(data.result);
+                        }
+                    }  else {
+                        v_alert.show({title:'Load BP error', body:data.result});
+                        reject(data.result);
                     }
-                }).fail(
-                function (e) {
+                    
+                }).fail(function (e) {
                     console.log(e);
-                    v_alert.show('Error in BP ' + e);
+                    v_alert.show({title:'Error load BP', body:e});
                     reject(e);
-                })
+                });                
     });
 };
 
 application.prototype.getGridDataSync = async function (npage, rcount, role_id, user_id) {
     var dbname = this.dbname;;
-    var self = this;
+    //var self = this;
     console.log('ROLEID', role_id);
     var params = array_merge(
             {
@@ -180,7 +209,7 @@ application.prototype.getGridDataSync = async function (npage, rcount, role_id, 
                 }).fail(
                 function (e) {
                     console.log(e);
-                    v_alert.show('Error ' + e);
+                    v_alert.show(e);
                     reject(['error', e]);
                 });
     });
@@ -212,7 +241,7 @@ application.prototype.loadOptions = async function () {
                 }).fail(
                 function (e) {
                     console.log(e);
-                    v_alert.show('Error ' + e);
+                    v_alert.show(e);
                     reject({error:e});
                 });
     });
@@ -229,7 +258,7 @@ application.prototype.getDbname = function () {
                 function (result) {
                     if (result.error()) {
                         console.error(result);
-                        v_alert.show('Error ' + result);
+                        v_alert.show(result);
                         reject({error: result});
                     } else
                     {
@@ -262,7 +291,7 @@ application.prototype.getUserInfo = function() {
                 }).fail(
                 function (e) {
                     console.log(e);
-                    v_alert.show('Error ' + e);
+                    v_alert.show(e);
                     reject({error: e});
                 });
     });
@@ -298,7 +327,7 @@ application.prototype.loadUserList = function() {
                 }).fail(
                 function (e) {
                     console.log('loadUserList error', e);
-                    v_alert.show('Error ' + e);
+                    v_alert.show(e);
                     reject(['error', e]);
                 });
     });
@@ -321,7 +350,7 @@ application.prototype.loadVZak = function () {
                 }).fail(
                 function (e) {
                     console.log('VZE', e);
-                    v_alert.show('Error ' + e);
+                    v_alert.show( e);
                     reject(['error', e]);
                 });
     });
@@ -350,7 +379,7 @@ application.prototype.getRoles = function () {
                 }).fail(
                 function (e) {
                     console.log('RE', e);
-                    v_alert.show('Error ' + e);
+                    v_alert.show(e);
                     reject(['error', e]);
                 });
     });
@@ -375,7 +404,7 @@ application.prototype.getUserRoles = function () {
                 }).fail(
                 function (e) {
                     console.log('URERE', e);
-                    v_alert.show('Error ' + e);
+                    v_alert.show(e);
                     reject(['error', e]);
                 });
     });
@@ -416,7 +445,7 @@ application.prototype.loadDealCatList = function () {
                     }).fail(
                     function (e) {
                         console.log('LDCLE', e);
-                        v_alert.show('Error ' + e);
+                        v_alert.show(e);
                         reject(['error', e]);
                     });
         } else {
@@ -512,6 +541,7 @@ application.prototype.dates = {
 };
 
 async function initapp(cb) {
+    try {
     app.dbname = await app.getDbname();
     app.userInfo = await app.getUserInfo();
 
@@ -530,7 +560,10 @@ async function initapp(cb) {
     
     app.roles = await app.getRoles();
     app.graph = await app.loadGraph();
-    
+    }
+    catch(e) {
+        console.log('catch', e);
+    }
     cb();
 }
 
@@ -943,12 +976,12 @@ Vue.component('main-form', {
                                 bus.$emit('message-saved', 1);
                             } else {
                                 console.log('error', resp);
-                                self.$dialog.alert(resp);
+                                self.$dialog.warn(resp);
                             }
                         },
                         error: function (e) {
                             console.log(e);
-                            v_alert.show('Error ' + e);
+                            v_alert.show(e);
                         }
                     }
             );
@@ -1011,12 +1044,12 @@ Vue.component('main-form', {
                                     }
                                     else {
                                         console.log('error', resp);
-                                        self.$dialog.alert('Error ' + resp);
+                                        self.$dialog.warn(resp);
                                     }
                                 },
                                 error: function (e) {
                                     console.log(e);
-                                    self.$dialog.alert('Error ' + e);
+                                    self.$dialog.warn(e);
                                 }
                             }
                     );
@@ -1053,10 +1086,10 @@ Vue.component('main-form', {
                                 mainform.show = false;
                             } else {
                                 console.log('error', resp);
-                                v_alert.show('Error ' + resp);
+                                v_alert.show(resp);
                             }
                         }).fail(function (e) {
-                            v_alert.show('Error ' + e);
+                            v_alert.show(e);
                             console.log(e);
                         });            
         },
@@ -1276,18 +1309,18 @@ Vue.component('newcard-form', {
                                     newbutton.show = false;
                                 } else {
                                     console.log('error', resp);
-                                    self.$dialog.alert('Error ' + resp);
+                                    self.$dialog.warn(resp);
                                 }
                             }).fail(function (e) {
                                 console.log('ajax error', e);
-                                self.$dialog.alert('Error ' + e);
+                                self.$dialog.warn(e);
                             });
 
                     this.disablebuttons = false;
                     return;
                 }
                 console.log('validate errors!', this.$validator);
-                self.$dialog.alert('validate errors!');
+                self.$dialog.warn('validate errors!');
             });
             this.disablebuttons = false;
         },
@@ -1412,11 +1445,11 @@ Vue.component('atooptions-form', {
                             app.options[0].folder_id = self.folder_id;
                         } else {
                             console.log('error', resp);
-                            self.$dialog.alert('Error ' + resp);
+                            self.$dialog.warn(resp);
                         }
                     }).fail(
                     function (e) {
-                        self.$dialog.alert('Error ' + e);
+                        self.$dialog.warn(e);
                         console.log(e);
                     });
         },
@@ -1441,7 +1474,7 @@ Vue.component('atooptions-form', {
                     bus.$emit('user-grid-update', 1);
                     bus.$emit('grid-update', 1);
                 }).fail(function (e) {
-                    self.$dialog.alert('Error ' + e);
+                    self.$dialog.warn(e);
                     console.log(e);
                 });
         },
@@ -1477,7 +1510,10 @@ Vue.component('ceditor', {
     template: '#ceditor-template',
     data: function() {
         return {
-            content:''
+            content:'',
+            iwidth: '32px',
+            ifull: false,
+            zcurs: 'zoom-in'
         }
     },
     mounted: function() {
@@ -1505,13 +1541,19 @@ Vue.component('ceditor', {
                 if (status == 'success') {
                     self.content = JSON.stringify(resp.result, "", 4);
                 } else {
-                    self.$dialog.alert('Error ' + resp);
+                    self.$dialog.warn(resp);
                     console.log(resp);
                 }
             }).fail(function (e) {
                 console.log(e);
-                self.$dialog.alert('Error ' + e);
+                self.$dialog.warn(e);
             });
+        },
+        togglew: function() {
+                console.log('togglew');
+                this.ifull = !this.ifull;
+                this.iwidth = this.ifull?'720px':'32px';
+                this.zcurs =  this.ifull?'zoom-out':'zoom=in';
         }
     }
 });
@@ -1553,11 +1595,11 @@ Vue.component('archivegrid', {
                     console.log('getRecords ok', resp.result);
                     self.records = resp.result;
                 } else {
-                    self.$dialog.alert('Error ' + resp);
+                    self.$dialog.warn(resp);
                     console.log(resp);
                 }
             }).fail(function (e) {
-                self.$dialog.alert('Error ' + e);
+                self.$dialog.warn(e);
                 console.log(e);
             });
         }

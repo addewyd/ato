@@ -597,3 +597,7 @@ span.farrow {
                    left: 42px;
                    top: 150px;
 }
+
+.bp-img {
+    float:left;
+}

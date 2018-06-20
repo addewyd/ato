@@ -236,12 +236,16 @@ class Maincntr extends AuxBase {
                 break;
             
             case 'getGraph':
-                $this -> log -> debug('gg params', $params);
+                /// $this -> log -> debug('gg params', $params);
                 $file = '../db/states.json';
                 $status = 'success';
                 $cmt = $file;
-                //$res = file_get_contents($file);
-                $res = json_decode(join(' ', file($file)));
+                try {
+                    $res = json_decode(join(' ', file($file)));
+                } catch (Exception $e) {
+                    $status = 'error';
+                    $res = $e;
+                }
                 break;
 
             case 'saveandnext':
