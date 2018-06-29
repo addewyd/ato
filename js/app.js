@@ -676,7 +676,7 @@ Vue.component('main-grid', {
                 if(d) {
                     var dt = app.dates.convert(d);
                     
-                    c = dt == NaN ? NaN : app.dates.compare(new Date(), dt);
+                    c = isNaN(dt) ? NaN : app.dates.compare(new Date(), dt);
                     //console.log('converted: ', dt);
                     
                     if(c > 0) {
@@ -685,7 +685,7 @@ Vue.component('main-grid', {
                     else if(c == 0) {
                         trstyle = 'background-color:#dffdad;color:brown;';                        
                     }
-                    else if(c == NaN) {
+                    else if(isNaN(c)) {
                         trstyle = 'background-color:#dfad99;color:blue;';
                     }
                     else {
