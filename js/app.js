@@ -508,6 +508,35 @@ application.prototype.getStateRoleId = function(state) {
     return this.getRoleId(role);
 }
 
+application.prototype.getFileData = function (id) {
+    return new Promise((resolve, reject) => {
+        BX24.callMethod(
+                "disk.file.get",
+                {
+                    id: id
+                },
+                function (result)
+                {
+                    if (result.error()) {
+                        console.error(result.error());
+                        reject([]);
+                    }
+                    else {
+                        console.dir(result.data());
+                        resolve(result.data);
+                    }
+                }
+        )
+    });
+
+}
+
+application.prototype.getFileUrl = async function(id) {
+    var res = await app.getFileData(id);
+    console.log('file:', res);
+    return res.DOWNLOAD_URL;
+}
+
 var app = new application();
 
 application.prototype.dates = {
@@ -801,7 +830,7 @@ Vue.component('opt-user-grid', {
     asyncComputed: {
         userlist_r: async function() {
             return this.userlist_raux(this.gridDataUpd);
-        }        
+        }
     },
     methods: {
         getEntry: function(e, k) {
@@ -846,13 +875,21 @@ Vue.component('main-form', {
             privatemsg: true,
             whom_selected: '',
             message: '',
+            upprc: 0,
             dataUpd: false,
             cmsg: [],
             whom_options: app.userList2,            
             dirty: false,
             rec: this.record,
             admin: app.userInfo.admin,
-            userinfo: app.userInfo.result
+            userinfo: app.userInfo.result,
+            somefile1: '', // TZ
+            somefile1_obj: [],
+            somefile2: '',
+            somefile2_obj: [],
+            
+            d_tzfiles: [],
+            d_dzfiles: []
         };
     },
     computed: {
@@ -894,21 +931,219 @@ Vue.component('main-form', {
     asyncComputed: {
         getComments: async function() {
             return this.comments(this.dataUpd);
+        },
+        tzfiles: async function() {
+            //this.d_tzfiles = await app.getFiles('tzfiles', this.rec.id);
+            //return this.d_tzfiles;
+            return this.getFiles('tzfiles', this.rec.id, this.dataUpd);
+        },
+        dzfiles: async function() {
+            //this.d_dzfiles = await app.getFiles('dzfiles', this.rec.id);            
+            //return this.d_dzfiles;
+            return this.getFiles('dzfiles', this.rec.id, this.dataUpd);
         }
     },
     mounted: function() {
         this.dirty = false;
         this._inRole = this.inRole();
         var self = this;
+        self.d_tzfiles = self.tz_files;
+        self.d_dzfiles = self.dz_files;
         self.cmsg = self.getComments;
-        bus.$on('message-saved', function (n) {
+            
+        bus.$on('message-saved', function (n) {            
             console.log('saved');
             self.message = '';
             self.dataUpd = ! self.dataUpd;
             self.cmsg = self.getComments;  // ??
         });        
+        bus.$on('files-changed', function (n) {
+            console.log('files-changed');
+            self.dataUpd = ! self.dataUpd;
+            self.d_tzfiles = self.tzfiles;
+            self.d_dzfiles = self.dzfiles;
+        });        
     },
     methods: {
+        emitter: function (event, data) {
+            this.$emit(event, data);
+            if(event === 'start') {
+                this.upprc = 0;
+                this.showupload = true;
+            }
+            if(event === 'finish') {
+                this.showupload = false;
+            }
+            if(event === 'progress') {
+                this.upprc = data;
+            }
+            //console.log(event, data);
+        },
+
+        getFiles: function (table, card_id, gupd) {
+            var self = this;
+            console.log('getFiles called');
+            var dbname = app.dbname;
+            var params = array_merge({
+                'operation': 'loadFiles',
+                table: table,
+                card_id: card_id,
+                'dbname': dbname
+            }, BX24.getAuth());
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: 'app/maincntr.php',
+                    async: true,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: params}).done(
+                        function (data) {
+                            console.log('getfiles', data.result);
+                            /*
+                            var files = data.result.map(i => {
+                                return {
+                                    file_id: i.file_id,
+                                    file_name: i.file_name,
+                                    file_url: app.getFileUrl(i.file_id)
+                                };
+                            });
+                            */
+                           var files = data.result;
+                            if(table === 'tzfiles') self.d_tzfiles = files;//data.result;
+                            if(table === 'dzfiles') self.d_dzfiles = files;//data.result;
+                            resolve(files);
+                        }).fail(
+                        function (e) {
+                            console.log('getfiles', e);
+                            v_alert.show(e);
+                            reject(['error', e]);
+                        });
+            });
+        },
+        
+        filesChange(name, files) {
+            console.log('FileC', name);
+            console.log('Files:', files, files.length);
+            if (name === 'somefile1') {
+                this.somefile1_obj = files;
+                this.somefile1 = 'somefile1';
+                this.uploadFiles('tzfiles', files);
+            } else if (name === 'somefile2') {
+                this.somefile2_obj = files;
+                this.somefile2 = 'somefile2';
+                this.uploadFiles('dzfiles', files);
+            } else {
+                console.log('FC?');
+            }
+        },
+        
+        uploadFiles(table, files) {
+            var dbname = app.dbname;
+            var params = array_merge({
+                'operation': 'addFiles',
+                table: table,
+                'dbname': dbname,
+                id: this.rec.id,
+                folder_id: app.folder_id,
+            }, BX24.getAuth());
+            var fdata = new FormData();
+            
+            $.each(params, function (k, v) {
+                fdata.append(k, v);
+            });
+            var self = this;
+                var len = files.length;
+                for (var i = 0; i < len; i++) {
+                    fdata.append(table + '_' + i, files.item(i));
+                }
+            $.ajax(
+                    {
+                        url: 'app/maincntr.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        processData: false,
+                        cache: false,
+                        contentType: false,
+                        enctype: 'multipart/form-data',
+                        data: fdata, // params,
+
+                        xhr: function () {
+                            var jqXHR = window.ActiveXObject ?
+                                    new window.ActiveXObject("Microsoft.XMLHTTP") :
+                                    new window.XMLHttpRequest();
+
+                            jqXHR.onloadstart = function (e) {
+                                self.emitter('start', e);
+                            };
+                            jqXHR.onloadend = function (e) {
+                                self.emitter('finish', e);
+                            };
+                            //Upload progress
+                            jqXHR.upload.addEventListener("progress", function (evt) {
+                                if (evt.lengthComputable) {
+                                    var percentComplete = Math.round((evt.loaded * 100) / evt.total);
+                                    self.emitter('progress', percentComplete);
+                                }
+                            }, false);
+                            //Download progress
+                            jqXHR.addEventListener("progress", function (evt)
+                            {
+                                if (evt.lengthComputable) {
+                                    var percentComplete = Math.round((evt.loaded * 100) / evt.total);
+                                    self.emitter('progress', percentComplete);
+                                }
+                            }, false);
+
+                            return jqXHR;
+                        }
+                    }).done(function (resp) {
+                var status = resp.status;
+                if (status === 'success') {
+                    bus.$emit('files-changed', 1);
+                } else {
+                    console.log('error', resp);
+                    self.$dialog.warn(resp);
+                }
+            }).fail(function (e) {
+                console.log('ajax error', e);
+                self.$dialog.warn(e);
+            });
+
+        },
+        
+        deleteFile(id) {
+            console.log('delete file', id);
+            var dbname = app.dbname;
+            var params = array_merge({
+                'operation': 'deleteFile',
+                'dbname': dbname,                
+                'id': id
+            }, BX24.getAuth());
+            return new Promise((resolve, reject) => {
+            $.ajax(
+                    {
+                        url: 'app/maincntr.php',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: params}).
+                        done(function (resp) {
+                            var status = resp.status;
+                            if (status == 'success') {
+                                resolve(resp.result);
+                                bus.$emit('files-changed', 1);
+                            } else {
+                                console.log('error', resp);
+                                reject(resp);
+                            }
+                        }).fail(function (e) {
+                            console.log(e);
+                            reject(e);
+                        }                    
+                );
+            });            
+            
+        },
+        
         comments: function (gupd) {
             var self = this;
             console.log('comments called');
@@ -1171,10 +1406,9 @@ Vue.component('newcard-form', {
             vz_options: [],
             dateend: '',
             somefile1: '', // TZ
-            somefile1_obj: {name: '', size: 0},
+            somefile1_obj: [],
             somefile2: '',
-            somefile2_obj: {name: '', size: 0}
-
+            somefile2_obj: []
         };
     },
     computed: {
@@ -1258,10 +1492,19 @@ Vue.component('newcard-form', {
                     $.each(data, function (k, v) {
                         fdata.append(k, v);
                     });
-                    if (this.somefile1)
-                        fdata.append(this.somefile1, $('#' + this.somefile1)[0].files[0]);
-                    if (this.somefile2)
-                        fdata.append(this.somefile2, $('#' + this.somefile2)[0].files[0]);
+                    var self = this;
+                    if (this.somefile1) {
+                        var len = this.somefile1_obj.length;
+                        for(var i = 0; i < len; i ++) {
+                            fdata.append(this.somefile1 + '_' + i, this.somefile1_obj.item(i));
+                        }
+                    }
+                    if (this.somefile2) {
+                        var len = this.somefile2_obj.length;
+                        for(var i = 0; i < len; i ++) {
+                            fdata.append(this.somefile2 + '_' + i, this.somefile2_obj.item(i));
+                        }
+                    }
                     $.ajax(
                             {
                                 url: 'app/maincntr.php',
@@ -1325,16 +1568,16 @@ Vue.component('newcard-form', {
             this.disablebuttons = false;
         },
         filesChange(name, files) {
-            console.log('FC', name);
-            console.log(files[0]);
+            console.log('FileC', name);
+            console.log('Files:', files, files.length);
             if (name === 'somefile1') {
-                this.somefile1_obj = files[0];
+                this.somefile1_obj = files;
                 this.somefile1 = 'somefile1';
             } else if (name === 'somefile2') {
-                this.somefile2_obj = files[0];
+                this.somefile2_obj = files;
                 this.somefile2 = 'somefile2';
             } else {
-
+                console.log('FC?');
             }
         },
         cancel() {
@@ -1660,8 +1903,7 @@ function vueapp () {
             },
             changev(d) {
                 
-            }
-            
+            }            
         }
     });
     
@@ -1699,12 +1941,7 @@ function vueapp () {
                 {data:'zakazchik', head:'заказчик'},
                 {data:'nmc', head:'нмц'},
                 {data:'link_zak', head:'ссылка'},
-                {data:'date_end', head:'Дата'},
-                {data:'somefile1', head:'ID файла ТЗ', 
-                    style:'text-align:right;width:100px',hstyle:'width:120px'},
-                {data:'f1_name', head:'Техзадание', style:'font-size:60%'},
-                {data:'somefile2', head:'some file 2 id '},
-                {data:'f2_name', head:'some file 2 name', style:'font-size:60%'}
+                {data:'date_end', head:'Дата'}
             ]
         },
         mounted: function () {

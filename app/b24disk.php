@@ -28,6 +28,44 @@ class Disk extends Bitrix24Entity {
         return $res;
     }
 
+    public function delete($o, $files) {
+        $o->log->debug('FILES to delete', $files);
+        foreach($files as $f) {
+            $this->client->call(
+                'disk.file.markdeleted', ['id' => $f]);
+        }
+    }
+    
+    
+    public function getChildIdByName($o, $folder_id, $childName) {
+        $res = $this->client->call(
+                'disk.folder.getchildren', 
+                ['id' =>  $folder_id,
+                'filter' => [
+                    'NAME' => $childName
+                ]]
+                );
+        $o->log->debug('getChildIdByName', [$folder_id]);
+        $o->log->debug('getChildIdByName', $res);
+        $res = $res['result'];
+        if (!$res)
+            return false;
+        if(isset($res['ID'])) return $res['ID'];
+
+        return false;
+    }    
+    
+    
+    public function getChildren($o, $folder_id) {
+        $res = $this->client->call(
+                'disk.folder.getchildren', ['id' => $folder_id]);
+        $res = $res['result'];
+        if (!$res)
+            return $res;
+
+        return $res;
+    }    
+    
     protected function B24upload($url, $filename, $out_name, $log) {
         $delimiter = '-------------' . uniqid();
 

@@ -35,6 +35,11 @@ class Maincntr extends AuxBase {
         $m = new Auxb24($this -> log, $_REQUEST);
         $m -> sendMsg($userid, $msg);
     }
+    
+    protected function deleteFilesFromDisk($files) {
+        $obB24Disk = new \Bitrix24\Disk\Disk($this->obB24App);
+        $obB24Disk -> delete($this, $files);
+    }
 
     public function manage($operation, $params) {
         
@@ -56,7 +61,8 @@ class Maincntr extends AuxBase {
                 
                 try {
                     if ($role_id && $strictroles) {
-                        $sql = 'select c.*, v.vid_zak from cards c 
+                        $sql = 'select c.*, v.vid_zak
+                        from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
                         where c.state != 80 
                         and (resp_role_id = ? or responsible = ?)
@@ -64,7 +70,8 @@ class Maincntr extends AuxBase {
                         $q = $pdo->prepare($sql);
                         $q->execute([$role_id, $user_id, $npage * $rcount, $rcount]);
                     } elseif($role_id) {
-                        $sql = 'select c.*, v.vid_zak from cards c 
+                        $sql = 'select c.*, v.vid_zak 
+                        from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
                         where c.state != 80 
                         and (resp_role_id != ? or responsible = ?)
@@ -72,7 +79,8 @@ class Maincntr extends AuxBase {
                         $q = $pdo->prepare($sql);
                         $q->execute([$role_id, $user_id, $npage * $rcount, $rcount]);
                     } else { // No access here!
-                        $sql = 'select c.*, v.vid_zak from cards c 
+                        $sql = 'select c.*, v.vid_zak 
+                        from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
                         where c.state != 80 and (0=1  or responsible = ?)
                         limit ?,?';  // 80 - archived
@@ -200,6 +208,30 @@ class Maincntr extends AuxBase {
                 }
                 break;
             
+            case 'loadFiles':
+                $dbname = $params['dbname'];
+                $pdo = new PDO("sqlite:../db/$dbname.sq3");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                
+                $id = $params['card_id'];
+                $table = $params['table'];
+                
+                $sql1 = 'select * from ' . $table . '
+                        where card_id=?';
+                $res = '';
+                $status = '';
+                $cmt = '';
+                try {
+                    $q = $pdo->prepare($sql1);
+                    $q->execute([$id]);
+                    $res = $q->fetchAll(PDO::FETCH_ASSOC);
+                    $status = 'success';
+                } catch (PDOException $e) {
+                    $status = 'error';
+                    $res = $e;
+                }
+                break;
+
             case 'setRole':                
                 $dbname = $params['dbname'];
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
@@ -360,49 +392,16 @@ class Maincntr extends AuxBase {
                 $somefile2_id = '';
                 $somefile2_name = '';
                 $somefile2_url = '';
-                
-                if(isset($_FILES)) {
-                    $this->log->debug('FILES', $_FILES);
-                    
-                    $obB24Disk = new \Bitrix24\Disk\Disk($this->obB24App);
-                    //$this->log->debug('DISK', [$obB24Disk]);
-                    if(isset($_FILES['somefile1'])) {
-                        // somefile1 - Техзадание
-                        $res = $obB24Disk -> upload(
-                                $this, $params['folder_id'],$_FILES['somefile1']);
-                        if(!$res) {
-                            $res = 'upload 1';
-                            $status = 'error';
-                            $cmt = '';
-                            break;
-                        }                   
-                    
-                        $somefile1_id = $res['ID'];
-                        $somefile1_name = $res['NAME'];
-                        $somefile1_url = $res['DOWNLOAD_URL'];
-                    }
-
-                    if(isset($_FILES['somefile2'])) {
-                        $res = $obB24Disk -> upload(
-                                $this, $params['folder_id'],$_FILES['somefile2']);
-                        if(!$res) {
-                            $res = 'upload 1';
-                            $status = 'error';
-                            $cmt = '';
-                            break;
-                        }                   
-                    
-                        $somefile2_id = $res['ID'];
-                        $somefile2_name = $res['NAME'];
-                        $somefile2_url = $res['DOWNLOAD_URL'];
-                    }
-                    
-                } else {
-                    $this->log->debug('NO FILES', []);    
-                }
                 $dbname = $params['dbname'];
+                $folder_id = $params['folder_id'];
                 //$values = $params['values'];
                 $values = $params;
+                
+                $pdo = new PDO("sqlite:../db/$dbname.sq3");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+                $pdo->beginTransaction();
+                
                 
                 $namezak = $values['namezak'];
                 $zakazchik = $values['zakazchik'];
@@ -416,11 +415,9 @@ class Maincntr extends AuxBase {
                         . '(cdate,state,vid_zak_id, nom_zak,'
                         . 'link_zak,name_zak,zakazchik,'
                         . 'deal_cat,author,responsible, resp_role_id, '
-                        . 'cur_resp,date_end,somefile1, f1_url,f1_name,'
-                        . 'somefile2, f2_url,f2_name) '
-                        . 'values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
-                $pdo = new PDO("sqlite:../db/$dbname.sq3");
-                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                        . 'cur_resp,date_end '
+                        . ') '
+                        . 'values (?,?,?,?,?,?,?,?,?,?,?,?,?)';
                 $today = date("Y-m-d H:i:s");                                 
                 $dateend = $this -> reformat_date($values['dateend']);
                 
@@ -440,27 +437,96 @@ class Maincntr extends AuxBase {
                         $resp,
                         $values['resp_role_id'],
                         $values['resp'],
-                        $dateend,
-                        $somefile1_id,
-                        $somefile1_url,
-                        $somefile1_name,
-                        $somefile2_id,
-                        $somefile2_url,
-                        $somefile2_name
+                        $dateend
                     ]);
                 
                     $today = date("Y-m-d H:i:s"); 
                     $msg = "New card";
                     $id = $pdo ->lastInsertId();
                     
-                    $sql = 'insert into comments (card_id, cdate, user_id, whom, private, state, msg)
+///  files
+                if(isset($_FILES)) {
+                    $this->log->debug('FILES', $_FILES);
+                    
+                    $obB24Disk = new \Bitrix24\Disk\Disk($this->obB24App);
+                    //$this->log->debug('DISK', [$obB24Disk]);
+                    
+                    // here cycle for FILES
+                    $ffield = '';
+                    foreach ($_FILES as $k => $v) {
+                        $table = '';
+                            $somefile_id ='';
+                            $somefile_name = '';
+                            $somefile_url = '';
+                        
+                        $af = preg_split('/_/', $k);
+                        if ($af[0] === 'somefile1') {
+                            // somefile1 - Техзадание
+                            $table = 'tzfiles';
+                            $disk_file_id = $obB24Disk->getChildIdByName(
+                                    $this, $folder_id, $_FILES[$k]['name']);
+                            
+                            $this->log->debug('DISKFILEID', [$disk_file_id, $_FILES[$k]['name']]);
+                            
+                            $res = $obB24Disk->upload(
+                                    $this, $folder_id, $_FILES[$k]);
+                            if (!$res) {
+                                $res = 'upload 1';
+                                $status = 'error';
+                                $cmt = '';
+                                break;
+                            }
+
+                            $somefile_id = $res['ID'];
+                            $somefile_name = $res['NAME'];
+                            $somefile_url = $res['DETAIL_URL'];
+                        }
+
+                        elseif ($af[0] === 'somefile2') {
+                            $table = 'dzfiles';
+                            $res = $obB24Disk->upload(
+                                    $this, $params['folder_id'], $_FILES[$k]);
+                            if (!$res) {
+                                $res = 'upload 1';
+                                $status = 'error';
+                                $cmt = '';
+                                break;
+                            }
+
+                            $somefile_id = $res['ID'];
+                            $somefile_name = $res['NAME'];
+                            $somefile_url = $res['DETAIL_URL'];
+                        }
+                        else {
+                            //
+                        }
+                        
+                        if($table) {
+                            $sql = 'insert into ' . $table . 
+                                    ' (card_id, file_id, file_name, file_url) '
+                                    . 'values '
+                                    . '(?,?,?,?)';
+                            $q = $pdo->prepare($sql);
+                            $q->execute([$id,$somefile_id,$somefile_name,$somefile_url]);
+                        }
+                    }
+                } else {
+                    $this->log->debug('NO FILES', []);    
+                }
+                    
+///                    
+                    
+                    $sql = 'insert into comments 
+                        (card_id, cdate, user_id, whom, private, state, msg)
                               values (?,?,?,?,?,?,?)'
                             ;
-                        $q = $pdo->prepare($sql);
-                        $q->execute(
+                    $q = $pdo->prepare($sql);
+                    $q->execute(
                                 [$id, 
                                     $today, 
-                                    $values['author'], 0, 0, $values['state'], $msg]);                        
+                                    $values['author'], 0, 0, $values['state'], $msg]); 
+                    
+                    $pdo -> commit();
                     
                     $sql = 'select role from roles where id = ?';
                     $q = $pdo->prepare($sql);
@@ -483,12 +549,67 @@ class Maincntr extends AuxBase {
                     }
                                     
                 } catch (PDOException $e) {
+                    $pdo ->rollBack();
                     $status = 'error';
                     $res = $e;
                 }
                 
                 break;
             //
+                
+            case 'addFiles':
+                $this->log->debug('ADD FILES PARAMETERS', $params);
+                $dbname = $params['dbname'];
+                $id = $params['id'];
+                $folder_id = $params['folder_id'];
+                $table = $params['table'];
+                
+                $cmt = '';
+                
+                $pdo = new PDO("sqlite:../db/$dbname.sq3");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo ->beginTransaction();
+                ///  files
+                try {
+                    $this->log->debug('addFiles FILES', $_FILES);
+
+                    $obB24Disk = new \Bitrix24\Disk\Disk($this->obB24App);
+                    //$this->log->debug('DISK', [$obB24Disk]);
+                    // here cycle for FILES
+                    $ffield = '';
+                    foreach ($_FILES as $k => $v) {
+                        $af = preg_split('/_/', $k);
+                        $res = $obB24Disk->upload(
+                                $this, $folder_id, $_FILES[$k]);
+                        if (!$res) {
+                            $res = 'upload 1';
+                            $status = 'error';
+                            $cmt = '';
+                            $pdo ->rollBack();
+                            break;
+                        }
+
+                        $somefile_id = $res['ID'];
+                        $somefile_name = $res['NAME'];
+                        $somefile_url = $res['DETAIL_URL'];
+
+                        $sql = 'insert into ' . $table .
+                                ' (card_id, file_id, file_name, file_url) '
+                                . 'values '
+                                . '(?,?,?,?)';
+                        $q = $pdo->prepare($sql);
+                        $q->execute([$id, $somefile_id, $somefile_name, $somefile_url]);
+                    }
+                    $pdo ->commit();
+                    $status = 'success';
+                }
+                catch(Exception $e) {
+                    $pdo ->rollBack();
+                    $status = 'error';
+                    $res = e;
+                }
+///                    
+                break;
 
             case 'deleteCard':
                 
@@ -497,7 +618,7 @@ class Maincntr extends AuxBase {
                 $author = $params['author'];
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                
+                $pdo ->beginTransaction();
                 $sql = 'delete from cards where id=?';
                 $res = '';
                 $status = '';
@@ -511,16 +632,71 @@ class Maincntr extends AuxBase {
                     $q = $pdo->prepare($sql);
                     $q->execute([$id]);
                     
+                    // TODO: delete files from disk
+                    
+                    $sql = 'select file_id from tzfiles where card_id=?';
+                    $q = $pdo->prepare($sql);
+                    $q->execute([$id]);
+                    $res = $q->fetchAll(PDO::FETCH_COLUMN);
+                    if($res) $this -> deleteFilesFromDisk($res);        
+                            
+                    $sql = 'select file_id from dzfiles where card_id=?';
+                    $q = $pdo->prepare($sql);
+                    $q->execute([$id]);
+                    $res = $q->fetchAll(PDO::FETCH_COLUMN);
+                    if($res) $this -> deleteFilesFromDisk($res);        
+                    
+                    $sql = 'delete from tzfiles where card_id=?';
+                    
+                    $q = $pdo->prepare($sql);
+                    $q->execute([$id]);
+                    $sql = 'delete from dzfiles where card_id=?';
+                    
+                    $q = $pdo->prepare($sql);
+                    $q->execute([$id]);
                     
                     $status = 'success';
                     $cmt = 'deleted';
-                    
+                                        
+                    $pdo ->commit();
                 } catch (PDOException $e) {
+                    $pdo ->rollBack();
                     $status = 'error';
                     $res = $e;
                 }
                 break;
-                        
+
+            case 'deleteFile':
+                
+                $dbname = $params['dbname'];
+                $id = $params['id'];
+                $pdo = new PDO("sqlite:../db/$dbname.sq3");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo ->beginTransaction();
+                $res = '';
+                $status = '';
+                $cmt = '';
+                try {
+                    $sql = 'delete from tzfiles where file_id=?';
+                    $q = $pdo->prepare($sql);
+                    $q->execute([$id]);
+                    $sql = 'delete from dzfiles where file_id=?';
+                    $q = $pdo->prepare($sql);
+                    $q->execute([$id]);
+                    $this ->deleteFilesFromDisk([$id]);
+                    
+                    $pdo -> commit();
+                    $res = 'n/a';
+                    $status = 'success';
+                    $cmt = 'deleted';
+                    
+                } catch (PDOException $e) {
+                    $pdo ->rollBack();
+                    $status = 'error';
+                    $res = $e;
+                }
+                break;
+                
             // options only for admin
             case 'getOptions':
                 

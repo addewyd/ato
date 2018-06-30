@@ -433,23 +433,30 @@
         </p>
         <!-- TZ -->
         <label for="somefile1">Техническое задание</label>
-            <div v-if="somefile1_obj.name" class="file-name">{{somefile1_obj.name}}, {{somefile1_obj.size}}</div>    
+            <div v-for="fname in somefile1_obj">
+            <div
+                class="file-name">{{fname.name}}, 
+                    {{fname.size}}</div>   
+            </div>
         <p :class="{ 'control': true }" class="field file" >
             <span class="file-input">Добавить файл</span>    
             <input class="file-input" type="file" id="somefile1" name="somefile1" 
                 @change="filesChange($event.target.name, $event.target.files)"
-                />
+                 multiple="multiple" />
             <span v-show="errors.has('somefile1')" 
                 class="help is-danger">{{ errors.first('somefile1') }}</span>
         </p>
         <label for="somefile2">Some file 2</label>
-            <div v-if="somefile2_obj.name" class="file-name">{{somefile2_obj.name}}, 
-                {{somefile2_obj.size}}</div>    
+            <div v-for="fname in somefile2_obj">
+            <div
+                class="file-name">{{fname.name}}, 
+                    {{fname.size}}</div>   
+            </div>
         <p :class="{ 'control': true }" class="field file" >
             <span class="file-input">Добавить файл</span>    
             <input class="file-input" type="file" id="somefile2" name="somefile2" 
                 @change="filesChange($event.target.name, $event.target.files)"
-                />
+                 multiple="multiple" />
             <span v-show="errors.has('somefile2')" 
                 class="help is-danger">{{ errors.first('somefile2') }}</span>
         </p>
@@ -539,13 +546,69 @@ Progress {{upprc}}%
         </p>
         <div>Нименование закупки {{rec.name_zak}}</div>
         <div>Заказчик {{rec.zakazchik}}</div>
-        
+        <!--
         <div v-if="rec.f1_url">
         Техническое задание <a v-bind:href="rec.f1_url">{{rec.f1_name}}</a>
         </div>
         <div v-if="rec.f2_url">
         somefile2 <a v-bind:href="rec.f2_url">{{rec.f2_name}}</a>
         </div>
+        -->
+        <label for="somefile1">Техническое задание</label>
+        <div>
+            <div v-for="file in d_tzfiles">
+            {{file.file_id}}
+            <a target="_blank" v-bind:href="file.file_url">{{file.file_name}}</a>
+            <button v-on:click="deleteFile(file.file_id)"
+            >X</button>
+            </div>
+        </div>
+        
+<!--  TZ -->        
+            <div v-for="fname in somefile1_obj">
+            <div
+                class="file-name">{{fname.name}}, 
+                    {{fname.size}}</div>   
+            </div>
+        <p :class="{ 'control': true }" class="field file" >
+            <span class="file-input">Добавить файл</span>    
+            <input class="file-input" type="file" id="somefile1" name="somefile1" 
+                @change="filesChange($event.target.name, $event.target.files)"
+                 multiple="multiple" />
+            <span v-show="errors.has('somefile1')" 
+                class="help is-danger">{{ errors.first('somefile1') }}</span>
+        </p>
+
+<!--  TZ -->        
+        
+        <hr />
+        
+        <div>
+        <label for="somefile2">Документы закупки</label>
+            <div v-for="file in d_dzfiles">
+            {{file.file_id}}
+            <a target="_blank" v-bind:href="file.file_url">{{file.file_name}}</a>
+            <button v-on:click="deleteFile(file.file_id)"
+            >X</button>
+            </div>
+        </div>
+<!--  DZ -->        
+            <div v-for="fname in somefile2_obj">
+            <div
+                class="file-name">{{fname.name}}, 
+                    {{fname.size}}</div>   
+            </div>
+        <p :class="{ 'control': true }" class="field file" >
+            <span class="file-input">Добавить файл</span>    
+            <input class="file-input" type="file" id="somefile1" name="somefile2" 
+                @change="filesChange($event.target.name, $event.target.files)"
+                 multiple="multiple" />
+            <span v-show="errors.has('somefile2')" 
+                class="help is-danger">{{ errors.first('somefile2') }}</span>
+        </p>
+
+<!--  DZ -->        
+        
     </div>
     
 <div id="main-buttons2" class="top4" v-if="b_count()==2">
@@ -645,31 +708,6 @@ No next, it is the END
                 <hr />
             </div>
         </div>  
-<!--        
-            <div class="comments-enter">
-                Message
-                
-                <input type="checkbox" id="checkbox" v-model="privatemsg">
-                <label for="checkbox">private {{ privatemsg }}</label>
-    
-                <div v-if="privatemsg">   
-                    <label for="main-whom">Private to</label>
-                    <p :class="{ 'control': true }" class="field">
-                <select id="main-whom" name="main-whom" v-model="whom_selected" > 
-                <option v-for="option in whom_options" v-bind:value="option.ID">
-                {{ option.NAME }}
-                </option>
-                </select>
-                <span v-show="errors.has('main-whom')" 
-                    class="help is-danger">{{ errors.first('main-whom') }}</span>
-                    </p>            
-            </div>    
-                <p  class="field">
-                <textarea class="content-input" v-model="message"></textarea>
-                </p>
-            </div>
-            <button class="all-but btn-success" @click="saveMessage(id,sObject.tr[0])">Add message</button>
-            </div>    -->
         </div> <!-- main-right -->
         
         
@@ -694,7 +732,7 @@ Vue.config.devtools = true;
 
 <script type="text/javascript" src="js/vue-async-computed.js"></script>
 <script type="text/javascript" src="//api.bitrix24.com/api/v1/"></script>
-<script type="text/javascript" src="js/app.js"></script>  
+<script type="text/javascript" src="js/app.js?"></script>  
 
  <script> 
     //VeeValidate.Validator.localize('ru', ruLocale);

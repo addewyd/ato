@@ -36,28 +36,6 @@ $sql1 = "create table if not exists  cards (
     f2_url varchar(255)
 )";
 
-$sql2 = "create table if not exists  archive (
-    id integer primary key autoincrement,
-    cdate datetime,
-    state integer not null,    
-    vid_zak_id integer not null,
-    deal_cat integer not null,
-    nom_zak varchar(24),
-    link_zak varchar(120),
-    name_zak varchar(120),
-    zakazchik varchar(60),
-    nmc integer,
-    sroki varchar(60),
-    tz varchar(24),
-    etp varchar(60),
-    author integer not null,
-    responsible integer not null,
-    cur_resp integer not null,
-    date_end date,
-    arch_date date,
-    arch_state integer
-)";
-
 $sql3 = "create table if not exists options (
     userid integer not null,
     folder_id integer not null,
@@ -76,9 +54,11 @@ $sql4 = "
 )";
 
 $sql5 ="
-    insert into vid_zak (vid_zak) values ('Вид закупки 1');
-    insert into vid_zak (vid_zak) values ('Вид закупки 2');
-    insert into vid_zak (vid_zak) values ('Вид закупки 3');
+    insert into vid_zak (vid_zak) values ('аукцион');
+    insert into vid_zak (vid_zak) values ('конкурс');
+    insert into vid_zak (vid_zak) values ('запрос предложений/цен');
+    insert into vid_zak (vid_zak) values ('запрос котировок');
+    insert into vid_zak (vid_zak) values ('предварительный квалификационный отбор');
 "; 
 
 
@@ -118,6 +98,38 @@ $sql9 =
     )";  
 // ctype - privatemsg, comment or state change
 
+$sqlA = "
+    drop table if exists type_zak;
+    create table if not exists type_zak (
+    id integer primary key autoincrement,
+    type_zak varchar(60)
+)";
+
+$sqlA1 ="
+    insert into type_zak (type_zak) values ('Тендер');
+    insert into type_zak (type_zak) values ('Рабочий Проект');
+    insert into type_zak (type_zak) values ('Пред Проект');
+    insert into type_zak (type_zak) values ('Экспертиза');
+"; 
+
+
+$sqlB = "
+    drop table if exists tzfiles;
+    create table if not exists tzfiles (
+    card_id integer not null,
+    file_id integer not null,
+    file_name varchar(255),
+    file_url varchar(255)
+)";
+$sqlC = "
+    drop table if exists dzfiles;
+    create table if not exists dzfiles (
+    card_id integer not null,
+    file_id integer not null,
+    file_name varchar(255),
+    file_url varchar(255)
+)";
+
 
 $pdo = new PDO( "sqlite:../db/$dbname.sq3");
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -126,7 +138,7 @@ try {
     $pdo -> exec($sql00);
     
     $pdo -> exec($sql1);
-    $pdo -> exec($sql2);
+//    $pdo -> exec($sql2);
     $pdo -> exec($sql3);
     $pdo -> exec($sql30);
     $pdo -> exec($sql4);
@@ -134,7 +146,10 @@ try {
     $pdo -> exec($sql6);
     $pdo -> exec($sql7);
     $pdo -> exec($sql8);
-    $pdo -> exec($sql9);
+    $pdo -> exec($sqlA);
+    $pdo -> exec($sqlA1);
+    $pdo -> exec($sqlB);
+    $pdo -> exec($sqlC);
 
 } catch(PDOException $e) {
     echo "Error: ".$e;
