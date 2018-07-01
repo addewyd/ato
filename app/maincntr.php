@@ -61,27 +61,30 @@ class Maincntr extends AuxBase {
                 
                 try {
                     if ($role_id && $strictroles) {
-                        $sql = 'select c.*, v.vid_zak
+                        $sql = 'select c.*, v.vid_zak, t.type_zak
                         from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
+                        join type_zak t on c.type_zak_id=t.id
                         where c.state != 80 
                         and (resp_role_id = ? or responsible = ?)
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
                         $q->execute([$role_id, $user_id, $npage * $rcount, $rcount]);
                     } elseif($role_id) {
-                        $sql = 'select c.*, v.vid_zak 
+                        $sql = 'select c.*, v.vid_zak, t.type_zak 
                         from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
+                        join type_zak t on c.type_zak_id=t.id
                         where c.state != 80 
                         and (resp_role_id != ? or responsible = ?)
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
                         $q->execute([$role_id, $user_id, $npage * $rcount, $rcount]);
                     } else { // No access here!
-                        $sql = 'select c.*, v.vid_zak 
+                        $sql = 'select c.*, v.vid_zak, t.type_zak 
                         from cards c 
                         join vid_zak v on c.vid_zak_id=v.id
+                        join type_zak t on c.type_zak_id=t.id
                         where c.state != 80 and (0=1  or responsible = ?)
                         limit ?,?';  // 80 - archived
                         $q = $pdo->prepare($sql);
@@ -118,6 +121,27 @@ class Maincntr extends AuxBase {
                 }
                 break;
 
+            case 'getTypeZak':
+                
+                $dbname = $params['dbname'];
+                $pdo = new PDO("sqlite:../db/$dbname.sq3");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                
+                $sql1 = 'select * from type_zak';
+                $res = '';
+                $status = '';
+                $cmt = '';
+                try {
+                    $q = $pdo->prepare($sql1);
+                    $q->execute();
+                    $res = $q->fetchAll(PDO::FETCH_ASSOC);
+                    $status = 'success';
+                } catch (PDOException $e) {
+                    $status = 'error';
+                    $res = $e;
+                }
+                break;
+            
             case 'getArchive':
                 
                 $dbname = $params['dbname'];
@@ -232,6 +256,30 @@ class Maincntr extends AuxBase {
                 }
                 break;
 
+            case 'loadCoresp':
+                $dbname = $params['dbname'];
+                $pdo = new PDO("sqlite:../db/$dbname.sq3");
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                
+                $id = $params['card_id'];
+                $table = 'coresp';
+                
+                $sql1 = 'select * from ' . $table . '
+                        where card_id=?';
+                $res = '';
+                $status = '';
+                $cmt = '';
+                try {
+                    $q = $pdo->prepare($sql1);
+                    $q->execute([$id]);
+                    $res = $q->fetchAll(PDO::FETCH_ASSOC);
+                    $status = 'success';
+                } catch (PDOException $e) {
+                    $status = 'error';
+                    $res = $e;
+                }
+                break;
+            
             case 'setRole':                
                 $dbname = $params['dbname'];
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
@@ -397,6 +445,11 @@ class Maincntr extends AuxBase {
                 //$values = $params['values'];
                 $values = $params;
                 
+                $coresp_list = $params['coresp_list'] ? json_decode(
+                        $params['coresp_list'], true) : [];
+                
+                $this->log->debug('CORESP LIST', $coresp_list);
+                
                 $pdo = new PDO("sqlite:../db/$dbname.sq3");
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -404,6 +457,7 @@ class Maincntr extends AuxBase {
                 
                 
                 $namezak = $values['namezak'];
+                $typezak = $values['typezak'];
                 $zakazchik = $values['zakazchik'];
                 $resp = $values['resp'];
 
@@ -412,14 +466,28 @@ class Maincntr extends AuxBase {
                 $cmt = $values;
 
                 $sql = 'insert into cards '
-                        . '(cdate,state,vid_zak_id, nom_zak,'
+                        . '(cdate,state,vid_zak_id, type_zak_id, nom_zak,'
                         . 'link_zak,name_zak,zakazchik,'
                         . 'deal_cat,author,responsible, resp_role_id, '
-                        . 'cur_resp,date_end '
-                        . ') '
-                        . 'values (?,?,?,?,?,?,?,?,?,?,?,?,?)';
-                $today = date("Y-m-d H:i:s");                                 
+                        . 'cur_resp,date_end, '
+                        . 'date_vrz,date_vpi,date_opr,nmc,sroki,etp,toz,toi) '
+                        . 'values '
+                        . '(?,?,?,?,?,?,?,'
+                        . '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                
+                $today = date("Y-m-d H:i:s");    
+                
                 $dateend = $this -> reformat_date($values['dateend']);
+                $date_vrz = $this -> reformat_date($values['date_vrz']);
+                $date_vpi = $this -> reformat_date($values['date_vpi']);
+                $date_opr = $this -> reformat_date($values['date_opr']);
+
+                $nmc = $values['nmc'];
+                $sroki = $values['sroki'];
+                $etp = $values['etp'];
+                $toz = $values['toz'];
+                $toi = $values['toi'];
+                
                 
                 try {
                     $q = $pdo->prepare($sql);
@@ -428,6 +496,7 @@ class Maincntr extends AuxBase {
                         $today,
                         $values['state'],
                         $values['vidzak'],
+                        $typezak,
                         $values['nomzak'],
                         $values['linkzak'],
                         $namezak,
@@ -437,13 +506,22 @@ class Maincntr extends AuxBase {
                         $resp,
                         $values['resp_role_id'],
                         $values['resp'],
-                        $dateend
+                        $dateend,
+                        $date_vrz,$date_vpi,$date_opr,$nmc,$sroki,$etp,$toz,$toi
                     ]);
                 
                     $today = date("Y-m-d H:i:s"); 
                     $msg = "New card";
                     $id = $pdo ->lastInsertId();
                     
+                    
+                    foreach($coresp_list as $co) {
+                        $sql = 'insert into coresp (card_id, user_id, name)'
+                                . 'values '
+                                . '(?,?,?)';
+                        $q = $pdo->prepare($sql);
+                        $q->execute([$id, $co['ID'], $co['NAME']]);                                
+                    }
 ///  files
                 if(isset($_FILES)) {
                     $this->log->debug('FILES', $_FILES);
@@ -600,6 +678,11 @@ class Maincntr extends AuxBase {
                         $q = $pdo->prepare($sql);
                         $q->execute([$id, $somefile_id, $somefile_name, $somefile_url]);
                     }
+                    
+                    // TODO:
+                    // add comments
+                    // send messages
+                    
                     $pdo ->commit();
                     $status = 'success';
                 }
@@ -657,6 +740,10 @@ class Maincntr extends AuxBase {
                     
                     $status = 'success';
                     $cmt = 'deleted';
+                    
+                    // TODO:
+                    // add comments
+                    // send messages
                                         
                     $pdo ->commit();
                 } catch (PDOException $e) {

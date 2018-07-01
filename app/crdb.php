@@ -14,6 +14,7 @@ $sql1 = "create table if not exists  cards (
     cdate datetime,
     state integer not null,    
     vid_zak_id integer not null,
+    type_zak_id integer not null,
     deal_cat integer not null,
     nom_zak varchar(24),
     link_zak varchar(120),
@@ -21,19 +22,18 @@ $sql1 = "create table if not exists  cards (
     zakazchik varchar(60),
     nmc integer,
     sroki varchar(60),
-    tz varchar(24),
     etp varchar(60),
     author integer not null,
     responsible integer not null,
     resp_role_id integer,
     cur_resp integer not null,
-    date_end date,
-    somefile1 integer,
-    f1_name varchar(255),
-    f1_url varchar(255),
-    somefile2 integer,
-    f2_name varchar(255),
-    f2_url varchar(255)
+    date_end datetime,
+    date_vrz datetime,
+    date_vpi datetime,
+    date_opr datetime,
+    etp varchar(40),
+    toz integer,
+    toi integer
 )";
 
 $sql3 = "create table if not exists options (
@@ -128,6 +128,14 @@ $sqlC = "
     file_id integer not null,
     file_name varchar(255),
     file_url varchar(255)
+)";
+
+$sqlC = "
+    drop table if exists coresp;
+    create table if not exists coresp (
+    user_id integer not null,
+    card_id integer not null,
+    name varchar(60)
 )";
 
 

@@ -365,7 +365,17 @@
             </option>
             </select>
         </p>
-        
+
+        <label for="typezak">Тип закупки</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <select id="typezak" v-model="type_selected"  v-validate="'required'"> 
+                <option v-for="option in type_options" v-bind:value="option.id">
+                {{ option.type_zak }}
+            </option>
+            </select>
+        </p>
+
         <label for="dealcat">Направление сделки</label>
         <span style="color: rgb(255, 0, 0);">*</span>
         <p :class="{ 'control': true }">
@@ -422,7 +432,32 @@
                 class="help is-danger">{{ errors.first('zakazchik') }}</span>
         </p>
 
-        <label for="dateend">Дата окончания</label>
+        <label for="nmc">НМЦ</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <input type="number" id="nmc"  class="content-input" name="nmc" 
+                v-model="nmc" placeholder="" 
+                v-validate="'required'"
+                :class="{'input': true, 'is-danger': errors.has('nmc') }"
+            />
+            <span v-show="errors.has('nmc')" 
+                class="help is-danger">{{ errors.first('nmc') }}</span>
+        </p>
+
+        <label for="sroki">Сроки выполнения работ</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <input id="sroki"  class="content-input" name="sroki" 
+                v-model="sroki" placeholder="" 
+                v-validate="'required'"
+                :class="{'input': true, 'is-danger': errors.has('sroki') }"
+            />
+            <span v-show="errors.has('sroki')" 
+                class="help is-danger">{{ errors.first('sroki') }}</span>
+        </p>
+
+
+        <label for="dateend">Дата окончания подачи</label>
         <p :class="{ 'control': true }">
              
             <date-picker  id="dateend" name="dateend" v-model="dateend" 
@@ -431,6 +466,37 @@
             <span v-show="errors.has('dateend')" 
                 class="help is-danger">{{ errors.first('dateend') }}</span>
         </p>
+
+        <label for="date_vrz">Дата рассмотрения заявок</label>
+        <p :class="{ 'control': true }">
+             
+            <date-picker  id="date_vrz" name="date_vrz" v-model="date_vrz" 
+                v-validate="'required'"
+                 :format="customFormatter"></date-picker>
+            <span v-show="errors.has('date_vrz')" 
+                class="help is-danger">{{ errors.first('date_vrz') }}</span>
+        </p>
+        
+        <label for="date_vpi">Дата подведения итогов</label>
+        <p :class="{ 'control': true }">
+             
+            <date-picker  id="date_vpi" name="date_vpi" v-model="date_vpi" 
+                v-validate="'required'"
+                 :format="customFormatter"></date-picker>
+            <span v-show="errors.has('date_vpi')" 
+                class="help is-danger">{{ errors.first('date_vpi') }}</span>
+        </p>
+
+        <label for="date_opr">Дата окончания подачи разъяснений</label>
+        <p :class="{ 'control': true }">
+             
+            <date-picker  id="date_opr" name="date_opr" v-model="date_opr" 
+                v-validate="'required'"
+                 :format="customFormatter"></date-picker>
+            <span v-show="errors.has('date_opr')" 
+                class="help is-danger">{{ errors.first('date_opr') }}</span>
+        </p>
+
         <!-- TZ -->
         <label for="somefile1">Техническое задание</label>
             <div v-for="fname in somefile1_obj">
@@ -460,6 +526,63 @@
             <span v-show="errors.has('somefile2')" 
                 class="help is-danger">{{ errors.first('somefile2') }}</span>
         </p>
+
+        <label for="etp">ЕТП/подача на бумаге</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <input id="etp"  class="content-input" name="etp" 
+                v-model="etp" placeholder="" 
+                v-validate="'required'"
+                :class="{'input': true, 'is-danger': errors.has('etp') }"
+            />
+            <span v-show="errors.has('etp')" 
+                class="help is-danger">{{ errors.first('etp') }}</span>
+        </p>
+
+        <label for="toz">Требование по обеспечению заявки</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <input type="number" id="toz"  class="content-input" name="toz" 
+                v-model="toz" placeholder="" 
+                v-validate="'required'"
+                :class="{'input': true, 'is-danger': errors.has('toz') }"
+            />
+            <span v-show="errors.has('toz')" 
+                class="help is-danger">{{ errors.first('toz') }}</span>
+        </p>
+
+        <label for="toi">Требование по обеспечению исполнения</label>
+        <span style="color: rgb(255, 0, 0);">*</span>
+        <p :class="{ 'control': true }" class="field">
+            <input type="number" id="toi"  class="content-input" name="toi" 
+                v-model="toi" placeholder="" 
+                v-validate="'required'"
+                :class="{'input': true, 'is-danger': errors.has('toi') }"
+            />
+            <span v-show="errors.has('toi')" 
+                class="help is-danger">{{ errors.first('toi') }}</span>
+        </p>
+        
+        <label for="coresp">Соисполнители</label>
+        <div v-for="coresp_item in coresp_list">
+            {{coresp_item.NAME  }}
+            <button class="all-but del-file" 
+            type="button"
+            v-on:click="delete_coresp(coresp_item.ID)">
+            X
+            </button>
+
+        </div>
+        
+        <p :class="{ 'control': true }" class="field">
+            <select id="coresp" v-model="coresp_selected" 
+                v-on:change="change_coresp()"> 
+                <option v-for="option in coresp_options" v-bind:value="option.ID">
+                {{ option.NAME }}
+            </option>
+            </select>
+        </p>
+        
 <div v-if="showupload" style="font-size:160%">
 Progress {{upprc}}%
 </div>
@@ -544,22 +667,25 @@ Progress {{upprc}}%
             <span v-show="errors.has('linkzak')" 
                 class="help is-danger">{{ errors.first('linkzak') }}</span>
         </p>
-        <div>Нименование закупки {{rec.name_zak}}</div>
+        <div><a v-bind:href="rec.link_zak">Наименование закупки {{rec.name_zak}}</a></div>
+        <div>Вид закупки {{rec.vid_zak}}</div>
+        <div>Тип закупки {{rec.type_zak}}</div>
         <div>Заказчик {{rec.zakazchik}}</div>
-        <!--
-        <div v-if="rec.f1_url">
-        Техническое задание <a v-bind:href="rec.f1_url">{{rec.f1_name}}</a>
-        </div>
-        <div v-if="rec.f2_url">
-        somefile2 <a v-bind:href="rec.f2_url">{{rec.f2_name}}</a>
-        </div>
-        -->
+            
+        <div>НМЦ {{rec.nmc}}р</div>
+        <div>Сроки выполнения работ {{rec.sroki}}</div>
+            
+        <div>Окончание подачи {{rec.date_end}}</div>
+        <div>Дата рассмотрения заявок {{rec.date_vrz}}</div>
+        <div>Дата подведения итогов {{rec.date_vpi}}</div>
+        <div>Дата подачи разъяснений {{rec.date_opr}}</div>
+
         <label for="somefile1">Техническое задание</label>
         <div>
             <div v-for="file in d_tzfiles">
             {{file.file_id}}
             <a target="_blank" v-bind:href="file.file_url">{{file.file_name}}</a>
-            <button v-on:click="deleteFile(file.file_id)"
+            <button class="all-but del-file" v-on:click="deleteFile(file.file_id)"
             >X</button>
             </div>
         </div>
@@ -588,7 +714,7 @@ Progress {{upprc}}%
             <div v-for="file in d_dzfiles">
             {{file.file_id}}
             <a target="_blank" v-bind:href="file.file_url">{{file.file_name}}</a>
-            <button v-on:click="deleteFile(file.file_id)"
+            <button class="all-but del-file" v-on:click="deleteFile(file.file_id)"
             >X</button>
             </div>
         </div>
@@ -608,7 +734,16 @@ Progress {{upprc}}%
         </p>
 
 <!--  DZ -->        
-        
+
+        <div>ЭТП / подача на бумаге {{rec.etp}}</div>
+            
+        <div>Требование по обеспечению заявки {{rec.toz}}р</div>
+        <div>Требование по обеспечению исполнения {{rec.toi}}р</div>
+<div v-if="d_coresp.length > 0">Соисполнители</div>
+<div v-for="co in d_coresp" class="coresp-name">
+    {{co.name}}
+</div>
+
     </div>
     
 <div id="main-buttons2" class="top4" v-if="b_count()==2">

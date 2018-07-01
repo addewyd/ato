@@ -356,6 +356,29 @@ application.prototype.loadVZak = function () {
     });
 };
 
+application.prototype.loadTypeZak = function () {
+    var dbname = app.dbname;
+    var params = array_merge({'operation': 'getTypeZak',
+        'dbname': dbname}, BX24.getAuth());
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: 'app/maincntr.php',
+            async: true,
+            type: 'POST',
+            dataType: 'json',
+            data: params}).done(
+                function (data) {
+                    console.log('resolve TZ1', data.result);
+                    resolve(data.result);
+                }).fail(
+                function (e) {
+                    console.log('ЕZE', e);
+                    v_alert.show( e);
+                    reject(['error', e]);
+                });
+    });
+};
+
 application.prototype.getRoles = function () {
     var dbname = app.dbname;
     console.log('getRoles', dbname);
@@ -889,7 +912,8 @@ Vue.component('main-form', {
             somefile2_obj: [],
             
             d_tzfiles: [],
-            d_dzfiles: []
+            d_dzfiles: [],
+            d_coresp: []
         };
     },
     computed: {
@@ -933,14 +957,13 @@ Vue.component('main-form', {
             return this.comments(this.dataUpd);
         },
         tzfiles: async function() {
-            //this.d_tzfiles = await app.getFiles('tzfiles', this.rec.id);
-            //return this.d_tzfiles;
             return this.getFiles('tzfiles', this.rec.id, this.dataUpd);
         },
         dzfiles: async function() {
-            //this.d_dzfiles = await app.getFiles('dzfiles', this.rec.id);            
-            //return this.d_dzfiles;
             return this.getFiles('dzfiles', this.rec.id, this.dataUpd);
+        },
+        coresp: async function() {
+            return this.getCoresp(this.rec.id, this.dataUpd);
         }
     },
     mounted: function() {
@@ -999,15 +1022,6 @@ Vue.component('main-form', {
                     data: params}).done(
                         function (data) {
                             console.log('getfiles', data.result);
-                            /*
-                            var files = data.result.map(i => {
-                                return {
-                                    file_id: i.file_id,
-                                    file_name: i.file_name,
-                                    file_url: app.getFileUrl(i.file_id)
-                                };
-                            });
-                            */
                            var files = data.result;
                             if(table === 'tzfiles') self.d_tzfiles = files;//data.result;
                             if(table === 'dzfiles') self.d_dzfiles = files;//data.result;
@@ -1015,6 +1029,36 @@ Vue.component('main-form', {
                         }).fail(
                         function (e) {
                             console.log('getfiles', e);
+                            v_alert.show(e);
+                            reject(['error', e]);
+                        });
+            });
+        },
+
+        getCoresp: function (card_id, gupd) {
+            var self = this;
+            console.log('getCoresp called');
+            var dbname = app.dbname;
+            var params = array_merge({
+                'operation': 'loadCoresp',
+                card_id: card_id,
+                'dbname': dbname
+            }, BX24.getAuth());
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: 'app/maincntr.php',
+                    async: true,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: params}).done(
+                        function (data) {
+                            console.log('getCoresp', data.result);
+                            var d = data.result;
+                            self.d_coresp = d;
+                            resolve(d);
+                        }).fail(
+                        function (e) {
+                            console.log('getcoresp', e);
                             v_alert.show(e);
                             reject(['error', e]);
                         });
@@ -1112,6 +1156,23 @@ Vue.component('main-form', {
         },
         
         deleteFile(id) {
+            var self = this;
+            var msg = 'Удалить файл?';
+            var opts = {
+                okText:'Продолжить',
+                cancelText: 'Отмена',
+            };
+            this.$dialog.confirm(msg, opts)
+                .then(function () {
+		console.log('Clicked on proceed');
+                self.deleteFile2(id);
+            })
+            .catch(function () {
+		console.log('Clicked on cancel');
+            });            
+        },
+        
+        deleteFile2(id) {
             console.log('delete file', id);
             var dbname = app.dbname;
             var params = array_merge({
@@ -1375,7 +1436,7 @@ Vue.component('main-form', {
             this.d_inRole = rc;
             return rc;
         },
-        deleteCard2: function() {
+        deleteCard2: function(a,b,c) {
             var id = this.rec.id;
             console.log('del ok', id);
             this.deleteCard(id);
@@ -1400,15 +1461,27 @@ Vue.component('newcard-form', {
             namezak: '',
             zakazchik: '',
             vz_selected: '',
+            vz_options: [],
+            type_selected: '',
+            type_options: [],
             dc_selected: '',
             resp_selected: '',
+            coresp_selected: '',
             resp_role_selected: '',
-            vz_options: [],
             dateend: '',
+            date_vrz: '',
+            date_vpi: '',
+            date_opr: '',
+            sroki: '',
+            nmc: 0,
+            toz: 0,
+            toi: 0,
+            etp: '',
             somefile1: '', // TZ
             somefile1_obj: [],
             somefile2: '',
-            somefile2_obj: []
+            somefile2_obj: [],
+            coresp_list: []
         };
     },
     computed: {
@@ -1417,7 +1490,10 @@ Vue.component('newcard-form', {
         },
         resp_options: function () {
             var res = app.userList2;
-            // create user {id,name} array
+            return res;
+        },
+        coresp_options: function () {
+            var res = app.userList2;
             return res;
         },
         resp_role_options: function () {
@@ -1430,11 +1506,35 @@ Vue.component('newcard-form', {
 
         vz_options: async function () {
             var d = await app.loadVZak();
-            this.vz_options1 = d;
+            this.vz_options1 = d; //?
+            return d;
+        },
+        type_options: async function () {
+            var d = await app.loadTypeZak();
+            this.type_options1 = d; //?
             return d;
         }
     },
     methods: {
+        change_coresp: function() {
+            console.log('CR', this.coresp_selected);
+            var self = this;
+            var item = this.coresp_options.find(
+                    function(el) { 
+                        return el.ID == self.coresp_selected;
+                    });
+            this.coresp_list.push(item);
+        },
+        delete_coresp: function(id) {
+            var self = this;
+            var ind = this.coresp_list.findIndex(
+                    function(el, index, array) { 
+                        //console.log(el, index, array);
+                        return el.ID == id
+                    });
+            if(ind >= 0)        
+                this.coresp_list.splice(ind, 1);
+        },
         emitter: function (event, data) {
             this.$emit(event, data);
             if(event === 'start') {
@@ -1463,6 +1563,7 @@ Vue.component('newcard-form', {
                 state: init_state, // state:1 !!!!
                 //author: app.userInfo.ID,
                 vidzak: this.vz_selected,
+                typezak: this.type_selected,
                 nomzak: this.nomzak,
                 linkzak: this.linkzak,
                 namezak: this.namezak,
@@ -1471,7 +1572,16 @@ Vue.component('newcard-form', {
                 resp: this.resp_selected,
                 author: app.userInfo.result.ID,
                 dateend: this.customFormatter(this.dateend),
-                resp_role_id: role_id
+                resp_role_id: role_id,
+                nmc: this.nmc,
+                sroki: this.sroki,
+                date_vrz: this.customFormatter(this.date_vrz),
+                date_vpi: this.customFormatter(this.date_vpi),
+                date_opr: this.customFormatter(this.date_opr),
+                etp: this.etp,
+                toz: this.toz,
+                toi: this.toi,
+                coresp_list: this.coresp_list.length > 0 ? JSON.stringify(this.coresp_list) : ''
             };
 
             var auth = BX24.getAuth();
@@ -1492,7 +1602,7 @@ Vue.component('newcard-form', {
                     $.each(data, function (k, v) {
                         fdata.append(k, v);
                     });
-                    var self = this;
+                    //var self = this;
                     if (this.somefile1) {
                         var len = this.somefile1_obj.length;
                         for(var i = 0; i < len; i ++) {
@@ -1563,7 +1673,7 @@ Vue.component('newcard-form', {
                     return;
                 }
                 console.log('validate errors!', this.$validator);
-                self.$dialog.warn('validate errors!');
+                this.$dialog.warn('validate errors!');
             });
             this.disablebuttons = false;
         },
@@ -1930,6 +2040,7 @@ function vueapp () {
                 {data:'state', head:'стат', replace:'state',
                     style:'word-wrap: break-word;font-size:70%;max-width:220px;font-weight:bold'}, 
                 {data:'vid_zak', head:'вид'}, 
+                {data:'type_zak', head:'тип'}, 
                 {data:'deal_cat', head:'направление', replace:'dcl',
                     style:'word-wrap: break-word;font-size:70%;max-width:220px'},
                 {data:'author', 

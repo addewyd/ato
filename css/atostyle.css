@@ -460,6 +460,11 @@ span.file-input {
     
 }
 
+button.del-file {
+    background-color: red;
+    color: white;
+}
+
 p.field {
     position: relative;
     display: block;
@@ -600,4 +605,9 @@ span.farrow {
 
 .bp-img {
     float:left;
+}
+
+.coresp-name {
+    margin-left: 10px;
+    font-weight: bold;
 }
