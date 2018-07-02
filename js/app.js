@@ -1084,11 +1084,15 @@ Vue.component('main-form', {
         uploadFiles(table, files) {
             var dbname = app.dbname;
             var params = array_merge({
-                'operation': 'addFiles',
+                operation: 'addFiles',
                 table: table,
-                'dbname': dbname,
+                dbname: dbname,
                 id: this.rec.id,
+                user_id: this.userinfo.ID,
+                state: this.state,
                 folder_id: app.folder_id,
+                coresp_list: this.coresp.length > 0 ? JSON.stringify(this.coresp) : ''
+
             }, BX24.getAuth());
             var fdata = new FormData();
             
@@ -1178,7 +1182,12 @@ Vue.component('main-form', {
             var params = array_merge({
                 'operation': 'deleteFile',
                 'dbname': dbname,                
-                'id': id
+                'id': id,
+                card_id: this.rec.id,
+                user_id: this.userinfo.ID,
+                state: this.state,
+                coresp_list: this.coresp.length > 0 ? JSON.stringify(this.coresp) : ''
+                
             }, BX24.getAuth());
             return new Promise((resolve, reject) => {
             $.ajax(

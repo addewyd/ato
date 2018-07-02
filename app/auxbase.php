@@ -7,6 +7,9 @@ class AuxBase {
             $this -> ai = '';
             $this -> ac = '';
             $this -> dbname = $r['dbname'];
+            $dbname = $this -> dbname;
+        $this -> pdo = new PDO("sqlite:../db/$dbname.sq3");
+        $this -> pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
             $log  -> debug('P', $r);
         
@@ -30,13 +33,9 @@ class AuxBase {
     }
     
     protected function get_codes() {
-        $dbname = $this -> dbname;
-        $pdo = new PDO("sqlite:../db/$dbname.sq3");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
         $sql = "select * from codes";
         try {
-            $q = $pdo->prepare($sql);
+            $q = $this -> pdo->prepare($sql);
             $q->execute();
             $res = $q->fetchAll(PDO::FETCH_ASSOC);
             if ($res) {
